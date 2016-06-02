@@ -1,0 +1,19 @@
+{
+  "name": "@doubleqliq/pannable-image",
+  "version": "1.0.0",
+  "description": "Create a pannable image",
+  "repository": {
+    "type": "git",
+    "url": "http://git.doubleqliq.com/wb/pannable-image.git"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "pannable",
+    "image"
+  ],
+  "author": "Steven Scaffidi",
+  "license": "ISC"
+}
