@@ -23,8 +23,8 @@ export class PannableImage extends Component {
   }
 
   static defaultProps = {
-    maskWidth: 0,
-    maskHeight: 0,
+    maskWidth: width,
+    maskHeight: height,
     maskPadding: 0,
     imageContainerWidth: width,
     imageContainerHeight: height,
@@ -45,7 +45,7 @@ export class PannableImage extends Component {
     this.panListener = null;
     this.currentPanValue = { x: 0, y: 0 };
     this.sizeListener = null;
-    this.currentSizeValue = { x: 0, y: 0 };
+    this.currentSizeValue = { x: props.imageWidth, y: props.imageHeight };
     this.angleListener = null;
     this.currentAngleValue = 0;
     this._imageWidth = props.imageWidth;
@@ -214,7 +214,12 @@ export class PannableImage extends Component {
             ]
           }}
         >
-          {children}
+          {React.cloneElement(
+            React.Children.only(children), {
+              imageWidth: this.currentSizeValue.x,
+              imageHeight: this.currentSizeValue.y,
+            }
+          )}
         </Animated.View>
         {imageMask ? (
           React.createElement(imageMask)
