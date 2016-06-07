@@ -5,6 +5,7 @@ import {
   View,
   Animated,
   Easing,
+  StyleSheet,
 } from 'react-native';
 import { distance, angle } from './utilities';
 const { width, height } = Dimensions.get('window');
@@ -197,10 +198,10 @@ export class PannableImage extends Component {
     const layout = pan.getLayout();
     return (
       <View
-        style={{
-          width: imageContainerWidth,
-          height: imageContainerHeight,
-        }}
+        style={[
+          styles.container,
+          { width: imageContainerWidth, height: imageContainerHeight }
+        ]}
         {...this._panResponder.panHandlers}
       >
         <Animated.View
@@ -230,3 +231,9 @@ export class PannableImage extends Component {
     );
   }
 }
+
+const styles = StyleSheet.create({
+  container: {
+    overflow: 'hidden',
+  },
+});

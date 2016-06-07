@@ -1,10 +1,10 @@
 {
   "name": "@doubleqliq/pannable-image",
-  "version": "1.0.2",
+  "version": "1.0.5",
   "description": "Create a pannable image",
   "repository": {
     "type": "git",
-    "url": "http://git.doubleqliq.com/wb/pannable-image.git"
+    "url": "https://git.doubleqliq.com/wb/pannable-image.git"
   },
   "main": "index.js",
   "scripts": {
