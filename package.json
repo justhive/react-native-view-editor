@@ -1,10 +1,10 @@
 {
-  "name": "@doubleqliq/pannable-image",
-  "version": "1.0.5",
-  "description": "Create a pannable image",
+  "name": "react-native-view-editor",
+  "version": "1.0.6",
+  "description": "A simple wrapper for being able to rotate, pan, and resize a child view or image with animations",
   "repository": {
     "type": "git",
-    "url": "https://git.doubleqliq.com/wb/pannable-image.git"
+    "url": "https://github.com/doubleqliq/react-native-view-editor.git"
   },
   "main": "index.js",
   "scripts": {

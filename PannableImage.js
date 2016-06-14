@@ -217,8 +217,8 @@ export class PannableImage extends Component {
         >
           {React.cloneElement(
             React.Children.only(children), {
-              imageWidth: this.currentSizeValue.x,
-              imageHeight: this.currentSizeValue.y,
+              imageWidth: size.x,
+              imageHeight: size.y,
             }
           )}
         </Animated.View>
