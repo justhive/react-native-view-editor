@@ -222,11 +222,7 @@ export class PannableImage extends Component {
             }
           )}
         </Animated.View>
-        {imageMask ? (
-          React.createElement(imageMask)
-        ) : (
-          null
-        )}
+        {imageMask && React.createElement(imageMask)}
       </View>
     );
   }
