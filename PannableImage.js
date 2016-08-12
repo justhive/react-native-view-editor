@@ -10,7 +10,13 @@ import {
 import { distance, angle } from './utilities';
 const { width, height } = Dimensions.get('window');
 
-export class PannableImage extends Component {
+const styles = StyleSheet.create({
+  container: {
+    overflow: 'hidden',
+  },
+});
+
+export class ViewEditor extends Component {
   static propTypes = {
     imageHeight: PropTypes.number.isRequired,
     imageWidth: PropTypes.number.isRequired,
@@ -20,7 +26,8 @@ export class PannableImage extends Component {
     maskHeight: PropTypes.number,
     maskWidth: PropTypes.number,
     maskPadding: PropTypes.number,
-    children: PropTypes.any,
+    children: PropTypes.func,
+    rotate: PropTypes.bool
   }
 
   static defaultProps = {
@@ -29,6 +36,7 @@ export class PannableImage extends Component {
     maskPadding: 0,
     imageContainerWidth: width,
     imageContainerHeight: height,
+    rotate: false,
   }
 
   constructor(props, context) {
@@ -194,8 +202,20 @@ export class PannableImage extends Component {
       imageContainerHeight,
       imageMask,
       children,
+      rotate,
     } = this.props;
     const layout = pan.getLayout();
+    const animatedStyle = {
+      width: size.x,
+      height: size.y,
+      transform: [
+        { translateX: layout.left },
+        { translateY: layout.top },
+      ]
+    };
+    if (rotate) {
+      animatedStyle.transform.push({ rotate: this.state.angle });
+    }
     return (
       <View
         style={[
@@ -205,31 +225,12 @@ export class PannableImage extends Component {
         {...this._panResponder.panHandlers}
       >
         <Animated.View
-          style={{
-            width: size.x,
-            height: size.y,
-            transform: [
-              { translateX: layout.left },
-              { translateY: layout.top },
-              { rotate: this.state.angle }
-            ]
-          }}
+          style={animatedStyle}
         >
-          {React.cloneElement(
-            React.Children.only(children), {
-              imageWidth: size.x,
-              imageHeight: size.y,
-            }
-          )}
+          {children(size.x, size.y)}
         </Animated.View>
         {imageMask && React.createElement(imageMask)}
       </View>
     );
   }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    overflow: 'hidden',
-  },
-});
