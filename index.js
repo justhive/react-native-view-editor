@@ -1,1 +1,1 @@
-export { PannableImage as default } from './PannableImage';
+export { ViewEditor as default } from './ViewEditor';
