@@ -2,6 +2,15 @@ function pow2abs(a, b) {
   return Math.pow(Math.abs(a - b), 2);
 }
 
+export function center(touches) {
+  const a = touches[0];
+  const b = touches[1];
+  return {
+    x: (a.pageX + b.pageX) / 2,
+    y: (a.pageY + b.pageY) / 2,
+  };
+}
+
 export function distance(touches) {
   const a = touches[0];
   const b = touches[1];
