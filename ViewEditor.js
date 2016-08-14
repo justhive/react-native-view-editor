@@ -7,7 +7,7 @@ import {
   Easing,
   StyleSheet,
 } from 'react-native';
-import { distance, angle } from './utilities';
+import { distance, angle, center } from './utilities';
 const { width, height } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
@@ -62,6 +62,7 @@ export class ViewEditor extends Component {
     this._angle = 0;
     this._previousDistance = 0;
     this._previousAngle = 0;
+    this._previousCenter = 0;
     this._multiTouch = false;
     this._handlePanResponderMove = ::this._handlePanResponderMove;
     this._handlePanResponderEnd = ::this._handlePanResponderEnd;
@@ -69,6 +70,7 @@ export class ViewEditor extends Component {
     this._updateSize = ::this._updateSize;
     this._checkAdjustment = ::this._checkAdjustment;
     this._updatePanState = ::this._updatePanState;
+    this._currentPanValue = { x: 0, y: 0 };
   }
 
   componentWillMount() {
@@ -105,6 +107,7 @@ export class ViewEditor extends Component {
   }
 
   _updateSize(x, y) {
+    this._checkAdjustment(x, y);
     this.setState({ animating: true });
     Animated.timing(
       this.state.size, {
@@ -116,7 +119,6 @@ export class ViewEditor extends Component {
       this.setState({ animating: false });
       this._imageWidth = this.currentSizeValue.x;
       this._imageHeight = this.currentSizeValue.y;
-      this._checkAdjustment();
     });
   }
 
@@ -128,16 +130,17 @@ export class ViewEditor extends Component {
 
   _handlePanResponderMove(e, gestureState) {
     if (gestureState.numberActiveTouches === 1 && !this._multiTouch) {
-      const move = Animated.event([
+      return Animated.event([
         null, { dx: this.state.pan.x, dy: this.state.pan.y }
-      ]);
-      return move(e, gestureState);
+      ])(e, gestureState);
     } else if (gestureState.numberActiveTouches !== 1) {
       this._multiTouch = true;
       this._previousDistance = this._previousDistance === 0 ?
         distance(e.nativeEvent.touches) : this._previousDistance;
       this._previousAngle = this._previousAngle === 0 ?
         angle(e.nativeEvent.touches) : this._previousAngle;
+      this._previousCenter = this._previousCenter === 0 ?
+        center(e.nativeEvent.touches) : this._previousCenter;
       // angle calculations
       const angleChange = angle(e.nativeEvent.touches) - this._previousAngle;
       this.state.angle.setValue(
@@ -147,12 +150,23 @@ export class ViewEditor extends Component {
       const currentDistance = distance(e.nativeEvent.touches);
       const newHeight = currentDistance - this._previousDistance + this._imageHeight;
       const newWidth = this._imageWidth * (newHeight / this._imageHeight);
+      const currentCenter = center(e.nativeEvent.touches);
+      const currentX = this._currentPanValue.x > 0 || newWidth < this.props.imageWidth ?
+        0 : this._currentPanValue.x;
+      const currentY = this._currentPanValue.y > 0 || newHeight < this.props.imageHeight ?
+        0 : this._currentPanValue.y;
+      const x = currentCenter.x - this._previousCenter.x + (this._imageWidth - newWidth) / 2 + currentX;
+      const y = currentCenter.y - this._previousCenter.y + (this._imageHeight - newHeight) / 2 + currentY;
+      this.state.pan.setOffset({ x, y });
       this.state.size.setValue({ x: newWidth, y: newHeight });
+      return Animated.event([
+        null, { dx: this.state.pan.x, dy: this.state.pan.y }
+      ])(e, gestureState);
     }
-    return null;
   }
 
   _handlePanResponderEnd() {
+    this._currentPanValue = this.currentPanValue;
     this._updatePanState();
     if (this._multiTouch) {
       this._imageWidth = this.currentSizeValue.x;
@@ -161,6 +175,7 @@ export class ViewEditor extends Component {
       this._multiTouch = false;
       this._previousDistance = 0;
       this._previousAngle = 0;
+      this._previousCenter = 0;
       const { maskWidth, maskHeight } = this.props;
       if (this._imageWidth < maskWidth || this._imageHeight < maskHeight) {
         const newWidth = this._imageWidth < maskWidth ? maskWidth : this._imageWidth;
@@ -174,11 +189,11 @@ export class ViewEditor extends Component {
     }
   }
 
-  _checkAdjustment() {
+  _checkAdjustment(newHeight = this._imageWidth, newWidth = this._imageHeight) {
     const positionUpdate = { x: 0, y: 0 };
-    const imageAbove = this.currentPanValue.y + this._imageHeight -
+    const imageAbove = this.currentPanValue.y + newHeight -
       this.props.imageContainerHeight + this.props.maskPadding;
-    const imageLeft = this.currentPanValue.x + this._imageWidth -
+    const imageLeft = this.currentPanValue.x + newWidth -
       this.props.imageContainerWidth + this.props.maskPadding;
     if (this.currentPanValue.x > this.props.maskPadding) {
       positionUpdate.x = -this.currentPanValue.x + this.props.maskPadding;
