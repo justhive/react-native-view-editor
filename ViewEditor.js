@@ -64,12 +64,12 @@ export class ViewEditor extends Component {
     this._previousAngle = 0;
     this._previousCenter = 0;
     this._multiTouch = false;
-    this._handlePanResponderMove = ::this._handlePanResponderMove;
-    this._handlePanResponderEnd = ::this._handlePanResponderEnd;
-    this._updatePosition = ::this._updatePosition;
-    this._updateSize = ::this._updateSize;
-    this._checkAdjustment = ::this._checkAdjustment;
-    this._updatePanState = ::this._updatePanState;
+    this._handlePanResponderMove = this._handlePanResponderMove.bind(this);
+    this._handlePanResponderEnd = this._handlePanResponderEnd.bind(this);
+    this._updatePosition = this._updatePosition.bind(this);
+    this._updateSize = this._updateSize.bind(this);
+    this._checkAdjustment = this._checkAdjustment.bind(this);
+    this._updatePanState = this._updatePanState.bind(this);
     this._currentPanValue = { x: 0, y: 0 };
   }
 
