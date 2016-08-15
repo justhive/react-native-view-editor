@@ -189,7 +189,7 @@ export class ViewEditor extends Component {
     }
   }
 
-  _checkAdjustment(newHeight = this._imageWidth, newWidth = this._imageHeight) {
+  _checkAdjustment(newWidth = this._imageWidth, newHeight = this._imageHeight) {
     const positionUpdate = { x: 0, y: 0 };
     const imageAbove = this.currentPanValue.y + newHeight -
       this.props.imageContainerHeight + this.props.maskPadding;
