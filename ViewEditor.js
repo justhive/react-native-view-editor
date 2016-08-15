@@ -18,6 +18,7 @@ const styles = StyleSheet.create({
 
 export class ViewEditor extends Component {
   static propTypes = {
+    style: View.propTypes.style,
     imageHeight: PropTypes.number.isRequired,
     imageWidth: PropTypes.number.isRequired,
     imageContainerHeight: PropTypes.number,
@@ -218,6 +219,7 @@ export class ViewEditor extends Component {
       imageMask,
       children,
       rotate,
+      style,
     } = this.props;
     const layout = pan.getLayout();
     const animatedStyle = {
@@ -234,6 +236,7 @@ export class ViewEditor extends Component {
     return (
       <View
         style={[
+          style,
           styles.container,
           { width: imageContainerWidth, height: imageContainerHeight }
         ]}
