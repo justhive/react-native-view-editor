@@ -28,7 +28,8 @@ export class ViewEditor extends Component {
     maskWidth: PropTypes.number,
     maskPadding: PropTypes.number,
     children: PropTypes.func,
-    rotate: PropTypes.bool
+    rotate: PropTypes.bool,
+    panning: PropTypes.bool,
   }
 
   static defaultProps = {
@@ -38,6 +39,7 @@ export class ViewEditor extends Component {
     imageContainerWidth: width,
     imageContainerHeight: height,
     rotate: false,
+    panning: true,
   }
 
   constructor(props, context) {
@@ -76,8 +78,8 @@ export class ViewEditor extends Component {
 
   componentWillMount() {
     this._panResponder = PanResponder.create({
-      onStartShouldSetPanResponder: () => !this.state.animating,
-      onMoveShouldSetPanResponder: () => !this.state.animating,
+      onStartShouldSetPanResponder: () => !this.state.animating && this.props.panning,
+      onMoveShouldSetPanResponder: () => !this.state.animating && this.props.panning,
       onPanResponderMove: this._handlePanResponderMove,
       onPanResponderRelease: this._handlePanResponderEnd,
       onPanResponderTerminate: this._handlePanResponderEnd,
@@ -220,6 +222,7 @@ export class ViewEditor extends Component {
       children,
       rotate,
       style,
+      panning,
     } = this.props;
     const layout = pan.getLayout();
     const animatedStyle = {
