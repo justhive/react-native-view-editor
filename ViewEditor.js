@@ -49,6 +49,7 @@ export class ViewEditor extends Component {
       pan: new Animated.ValueXY(),
       angle: new Animated.Value('0deg'),
       animating: false,
+      render: false,
     };
     this._panResponder = {};
     // panning variables
@@ -92,6 +93,7 @@ export class ViewEditor extends Component {
     this.panListener = this.state.pan.addListener(value => this.currentPanValue = value);
     this.scaleListener = this.state.scale.addListener(value => this.currentScaleValue = value);
     this.angleListener = this.state.angle.addListener(value => this.currentAngleValue = value);
+    this._checkAdjustment();
   }
 
   componentWillUnmount() {
@@ -130,7 +132,7 @@ export class ViewEditor extends Component {
   _updatePanState(x = this.currentPanValue.x, y = this.currentPanValue.y) {
     this.state.pan.setOffset({ x, y });
     this.state.pan.setValue({ x: 0, y: 0 });
-    this.setState({ animating: false });
+    this.setState({ animating: false, render: true });
   }
 
   _handlePanResponderMove(e, gestureState) {
@@ -220,7 +222,7 @@ export class ViewEditor extends Component {
   }
 
   render() {
-    const { pan, scale } = this.state;
+    const { pan, scale, render } = this.state;
     const {
       imageWidth,
       imageHeight,
@@ -257,7 +259,7 @@ export class ViewEditor extends Component {
         <Animated.View
           style={animatedStyle}
         >
-          {children()}
+          {render && children()}
         </Animated.View>
         {imageMask && React.createElement(imageMask)}
       </View>
