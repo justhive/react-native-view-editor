@@ -30,6 +30,8 @@ export class ViewEditor extends Component {
     children: PropTypes.any,
     rotate: PropTypes.bool,
     panning: PropTypes.bool,
+    // used for multi-images
+    bigContainerWidth: PropTypes.number,
   }
 
   static defaultProps = {
@@ -44,8 +46,9 @@ export class ViewEditor extends Component {
 
   constructor(props, context) {
     super(props, context);
+    const relativeWidth = props.bigContainerWidth || props.imageContainerWidth
     this.state = {
-      scale: new Animated.Value(props.imageContainerWidth / props.imageWidth),
+      scale: new Animated.Value(relativeWidth / props.imageWidth),
       pan: new Animated.ValueXY(),
       angle: new Animated.Value('0deg'),
       animating: false,
@@ -59,7 +62,7 @@ export class ViewEditor extends Component {
     // scaling variables
     this.scaleListener = null;
     this.currentScaleValue = 1;
-    this._scale = props.imageContainerWidth / props.imageWidth;
+    this._scale = relativeWidth / props.imageWidth;
     // angle variables
     this.angleListener = null;
     this.currentAngleValue = 0;
