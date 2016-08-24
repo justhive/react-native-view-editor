@@ -30,6 +30,7 @@ export class ViewEditor extends Component {
     children: PropTypes.any,
     rotate: PropTypes.bool,
     panning: PropTypes.bool,
+    center: PropTypes.bool.isRequired,
     // used for multi-images
     bigContainerWidth: PropTypes.number,
   }
@@ -40,6 +41,7 @@ export class ViewEditor extends Component {
     maskPadding: 0,
     imageContainerWidth: width,
     imageContainerHeight: height,
+    center: true,
     rotate: false,
     panning: true,
   }
@@ -97,6 +99,29 @@ export class ViewEditor extends Component {
     this.scaleListener = this.state.scale.addListener(value => this.currentScaleValue = value);
     this.angleListener = this.state.angle.addListener(value => this.currentAngleValue = value);
     this._checkAdjustment();
+  }
+
+  componentDidUpdate(prevProps) {
+    const {
+      imageHeight,
+      imageWidth,
+      imageContainerWidth,
+      imageContainerHeight,
+    } = this.props;
+    const {
+      imageHeight: prevImageHeight,
+      imageWidth: prevImageWidth,
+      imageContainerWidth: prevImageContainerWidth,
+      imageContainerHeight: prevImageContainerHeight,
+    } = prevProps;
+    if (
+      imageHeight !== prevImageHeight ||
+      imageWidth !== prevImageWidth ||
+      imageContainerWidth !== prevImageContainerWidth ||
+      imageContainerHeight !== prevImageContainerHeight
+    ) {
+      this._checkAdjustment();
+    }
   }
 
   componentWillUnmount() {
@@ -203,17 +228,21 @@ export class ViewEditor extends Component {
   }
 
   _checkAdjustment() {
-    const { imageContainerHeight, imageContainerWidth, maskPadding, imageHeight, imageWidth } = this.props;
+    const { imageContainerHeight, imageContainerWidth, maskPadding, imageHeight, imageWidth, center } = this.props;
+    const widthDiff = this._scale * imageWidth - imageContainerWidth;
+    const heightDiff = this._scale * imageHeight - imageContainerHeight;
+    const maskPaddingDiffX = widthDiff < 0 && center ? -widthDiff / 2 : maskPadding;
+    const maskPaddingDiffY = heightDiff < 0 && center ? -heightDiff / 2 : maskPadding;
     const positionUpdate = { x: 0, y: 0 };
-    const imageAbove = this.currentPanValue.y + this._scale * imageHeight - imageContainerHeight + maskPadding;
-    const imageLeft = this.currentPanValue.x + this._scale * imageWidth - imageContainerWidth + maskPadding;
+    const imageLeft = this.currentPanValue.x + widthDiff + maskPaddingDiffX;
+    const imageAbove = this.currentPanValue.y + heightDiff + maskPaddingDiffY;
     const additionalWidth = (imageWidth - this._scale * imageWidth) / 2;
     const additionalHeight = (imageHeight - this._scale * imageHeight) / 2;
-    if (this.currentPanValue.x > maskPadding - additionalWidth) {
-      positionUpdate.x = -this.currentPanValue.x - additionalWidth + maskPadding;
+    if (this.currentPanValue.x > maskPaddingDiffX - additionalWidth) {
+      positionUpdate.x = -this.currentPanValue.x - additionalWidth + maskPaddingDiffX;
     }
-    if (this.currentPanValue.y > maskPadding - additionalHeight) {
-      positionUpdate.y = -this.currentPanValue.y - additionalHeight + maskPadding;
+    if (this.currentPanValue.y > maskPaddingDiffY - additionalHeight) {
+      positionUpdate.y = -this.currentPanValue.y - additionalHeight + maskPaddingDiffY;
     }
     if (imageAbove < -additionalHeight) {
       positionUpdate.y = -imageAbove - additionalHeight;
