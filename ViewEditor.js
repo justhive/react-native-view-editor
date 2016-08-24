@@ -81,6 +81,7 @@ export class ViewEditor extends Component {
     this._updateSize = this._updateSize.bind(this);
     this._checkAdjustment = this._checkAdjustment.bind(this);
     this._updatePanState = this._updatePanState.bind(this);
+    this._onDone = this._onDone.bind(this);
 
   }
 
@@ -251,6 +252,16 @@ export class ViewEditor extends Component {
       positionUpdate.x = -imageLeft - additionalWidth;
     }
     this._updatePosition(positionUpdate.x, positionUpdate.y);
+  }
+
+  _onDone() {
+    const scale = this.currentScaleValue.value;
+    const pan = this.currentPanValue;
+    const rotate = this.currentAngleValue.value;
+    const left = pan.x;
+    const top = pan.y;
+    this._updatePanState({ x: 0, y: 0 });
+    return { scale, rotate, top, left };
   }
 
   render() {
