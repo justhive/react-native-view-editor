@@ -11,7 +11,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "gl-react-native": "git+https://github.com/doubleqliq/gl-react-native.git",
+    "gl-react-native": "git+https://github.com/doubleqliq/gl-react-native.git"
   },
   "keywords": [
     "pannable",
