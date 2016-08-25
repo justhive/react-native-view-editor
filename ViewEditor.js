@@ -7,6 +7,7 @@ import {
   Easing,
   StyleSheet,
 } from 'react-native';
+import { Surface, AnimatedSurface } from 'gl-react-native';
 import { distance, angle, center } from './utilities';
 const { width, height } = Dimensions.get('window');
 
@@ -31,6 +32,7 @@ export class ViewEditor extends Component {
     rotate: PropTypes.bool,
     panning: PropTypes.bool,
     center: PropTypes.bool.isRequired,
+    croppingRequired: PropTypes.bool.isRequired,
     // used for multi-images
     bigContainerWidth: PropTypes.number,
   }
@@ -44,6 +46,7 @@ export class ViewEditor extends Component {
     center: true,
     rotate: false,
     panning: true,
+    croppingRequired: false,
   }
 
   constructor(props, context) {
@@ -57,6 +60,7 @@ export class ViewEditor extends Component {
       render: false,
     };
     this._panResponder = {};
+    this.surface = null;
     // panning variables
     this.panListener = null;
     this.currentPanValue = { x: 0, y: 0 };
@@ -82,12 +86,12 @@ export class ViewEditor extends Component {
     this._checkAdjustment = this._checkAdjustment.bind(this);
     this._updatePanState = this._updatePanState.bind(this);
     this._onDone = this._onDone.bind(this);
-
+    this.returnSurface = this.returnSurface.bind(this);
   }
 
   componentWillMount() {
     this._panResponder = PanResponder.create({
-      onStartShouldSetPanResponder: () => !this.state.animating && this.props.panning,
+      // onStartShouldSetPanResponder: () => !this.state.animating && this.props.panning,
       onMoveShouldSetPanResponder: () => !this.state.animating && this.props.panning,
       onPanResponderMove: this._handlePanResponderMove,
       onPanResponderRelease: this._handlePanResponderEnd,
@@ -264,6 +268,10 @@ export class ViewEditor extends Component {
     return { scale, rotate, top, left };
   }
 
+  returnSurface() {
+    return this.surface;
+  }
+
   render() {
     const { pan, scale, render } = this.state;
     const {
@@ -275,7 +283,7 @@ export class ViewEditor extends Component {
       children,
       rotate,
       style,
-      panning,
+      croppingRequired,
     } = this.props;
     const layout = pan.getLayout();
     const animatedStyle = {
@@ -290,18 +298,23 @@ export class ViewEditor extends Component {
     if (rotate) {
       animatedStyle.transform.push({ rotate: this.state.angle });
     }
+    const wrapStyle = [
+      style,
+      styles.container,
+      { width: imageContainerWidth, height: imageContainerHeight }
+    ];
+    // a GL node must be the child - I need to be able to wrap a containing surface
+    if (croppingRequired) {
+      return (
+        <AnimatedSurface ref={ref => this.surface = ref} width={imageWidth} height={imageHeight} style={animatedStyle} {...this._panResponder.panHandlers}>
+          {children}
+        </AnimatedSurface>
+      );
+    }
+
     return (
-      <View
-        style={[
-          style,
-          styles.container,
-          { width: imageContainerWidth, height: imageContainerHeight }
-        ]}
-        {...this._panResponder.panHandlers}
-      >
-        <Animated.View
-          style={animatedStyle}
-        >
+      <View style={wrapStyle} {...this._panResponder.panHandlers}>
+        <Animated.View style={animatedStyle}>
           {render && children()}
         </Animated.View>
         {imageMask && React.createElement(imageMask)}
