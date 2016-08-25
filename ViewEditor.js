@@ -6,6 +6,8 @@ import {
   Animated,
   Easing,
   StyleSheet,
+  ImageEditor,
+  Image,
 } from 'react-native';
 import { Surface, AnimatedSurface } from 'gl-react-native';
 import { distance, angle, center } from './utilities';
@@ -86,7 +88,7 @@ export class ViewEditor extends Component {
     this._checkAdjustment = this._checkAdjustment.bind(this);
     this._updatePanState = this._updatePanState.bind(this);
     this._onDone = this._onDone.bind(this);
-    this.returnSurface = this.returnSurface.bind(this);
+    this.captureFrameAndCrop = this.captureFrameAndCrop.bind(this);
   }
 
   componentWillMount() {
@@ -211,7 +213,7 @@ export class ViewEditor extends Component {
   }
 
   _handlePanResponderEnd() {
-    const { imageWidth, imageHeight } = this.props;
+    const { imageWidth, imageHeight, imageContainerWidth, imageContainerHeight } = this.props;
     this._pan = this.currentPanValue;
     this._updatePanState();
     if (this._multiTouch) {
@@ -268,8 +270,32 @@ export class ViewEditor extends Component {
     return { scale, rotate, top, left };
   }
 
-  returnSurface() {
-    return this.surface;
+  captureFrameAndCrop() {
+    const { imageWidth, imageHeight, imageContainerWidth, imageContainerHeight } = this.props;
+    const { value: scale } = this.currentScaleValue;
+    const scaleFactor = {
+      x: scale * imageWidth > imageContainerWidth ? (scale - imageContainerWidth / imageWidth) * imageContainerWidth : 0,
+      y: scale * imageHeight > imageContainerHeight ? (scale - imageContainerHeight / imageHeight) * imageContainerHeight : 0,
+    };
+    const offset = {
+      x: (imageWidth - imageContainerWidth) / 2 + this.currentPanValue.x + scaleFactor.x,
+      y: (imageHeight - imageContainerHeight) / 2 + this.currentPanValue.y + scaleFactor.y,
+    };
+    const size = {
+      width: imageWidth * 2 - offset.x,
+      height: imageHeight * 2 - offset.y,
+    };
+    const cropImage = (image) => new Promise(resolve =>
+      ImageEditor.cropImage(image, {
+        offset,
+        size,
+      }, uri => resolve(uri), () => null)
+    );
+    // TODO: Change this to file for performance sake
+    return this.surface.captureFrame({ quality: 1, format: 'base64', type: 'jpg' })
+    .then(image => cropImage(image))
+    .then(uri => uri)
+    .catch(error => console.log(error));
   }
 
   render() {
@@ -287,8 +313,6 @@ export class ViewEditor extends Component {
     } = this.props;
     const layout = pan.getLayout();
     const animatedStyle = {
-      height: imageHeight,
-      width: imageWidth,
       transform: [
         { translateX: layout.left },
         { translateY: layout.top },
@@ -303,6 +327,9 @@ export class ViewEditor extends Component {
       styles.container,
       { width: imageContainerWidth, height: imageContainerHeight }
     ];
+    if (!render) {
+      return null;
+    }
     // a GL node must be the child - I need to be able to wrap a containing surface
     if (croppingRequired) {
       return (
@@ -315,7 +342,7 @@ export class ViewEditor extends Component {
     return (
       <View style={wrapStyle} {...this._panResponder.panHandlers}>
         <Animated.View style={animatedStyle}>
-          {render && children()}
+          {children()}
         </Animated.View>
         {imageMask && React.createElement(imageMask)}
       </View>
