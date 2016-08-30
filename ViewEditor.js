@@ -87,7 +87,7 @@ export class ViewEditor extends Component {
     this._updateSize = this._updateSize.bind(this);
     this._checkAdjustment = this._checkAdjustment.bind(this);
     this._updatePanState = this._updatePanState.bind(this);
-    this._onDone = this._onDone.bind(this);
+    this.getScaledDims = this.getScaledDims.bind(this);
     this.captureFrameAndCrop = this.captureFrameAndCrop.bind(this);
   }
 
@@ -260,14 +260,11 @@ export class ViewEditor extends Component {
     this._updatePosition(positionUpdate.x, positionUpdate.y);
   }
 
-  _onDone() {
-    const scale = this.currentScaleValue.value;
-    const pan = this.currentPanValue;
-    const rotate = this.currentAngleValue.value;
-    const left = pan.x;
-    const top = pan.y;
-    this._updatePanState({ x: 0, y: 0 });
-    return { scale, rotate, top, left };
+  getScaledDims() {
+    return {
+      top: this._scale * this.props.imageHeight + this.currentPanValue.y,
+      left: this._scale * this.props.imageWidth + this.currentPanValue.x,
+    };
   }
 
   captureFrameAndCrop() {
@@ -282,8 +279,8 @@ export class ViewEditor extends Component {
       y: (imageHeight - imageContainerHeight) / 2 + this.currentPanValue.y + scaleFactor.y,
     };
     const size = {
-      width: imageWidth * 2 - offset.x,
-      height: imageHeight * 2 - offset.y,
+      width: imageWidth - offset.x,
+      height: imageHeight - offset.y,
     };
     const cropImage = (image) => new Promise(resolve =>
       ImageEditor.cropImage(image, {
