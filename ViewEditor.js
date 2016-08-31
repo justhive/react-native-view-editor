@@ -9,6 +9,7 @@ import {
   ImageEditor,
   Image,
 } from 'react-native';
+import RNFS from 'react-native-fs';
 import { Surface, AnimatedSurface } from 'gl-react-native';
 import { distance, angle, center } from './utilities';
 const { width, height } = Dimensions.get('window');
@@ -288,8 +289,7 @@ export class ViewEditor extends Component {
         size,
       }, uri => resolve(uri), () => null)
     );
-    // TODO: Change this to file for performance sake
-    return this.surface.captureFrame({ quality: 1, format: 'base64', type: 'jpg' })
+    return this.surface.captureFrame({ quality: 1, format: 'file', type: 'jpg', filePath: `${RNFS.DocumentDirectoryPath}/${new Date().getTime()}.jpg`})
     .then(image => cropImage(image))
     .then(uri => uri)
     .catch(error => console.log(error));
@@ -324,10 +324,11 @@ export class ViewEditor extends Component {
       styles.container,
       { width: imageContainerWidth, height: imageContainerHeight }
     ];
+
     if (!render) {
       return null;
     }
-    // a GL node must be the child - I need to be able to wrap a containing surface
+
     if (croppingRequired) {
       return (
         <AnimatedSurface ref={ref => this.surface = ref} width={imageWidth} height={imageHeight} style={animatedStyle} {...this._panResponder.panHandlers}>
