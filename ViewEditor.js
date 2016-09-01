@@ -62,7 +62,7 @@ export class ViewEditor extends Component {
       animating: false,
       render: false,
     };
-    this._panResponder = {};
+    // ref of the surface to capture
     this.surface = null;
     // panning variables
     this.panListener = null;
@@ -90,11 +90,9 @@ export class ViewEditor extends Component {
     this._updatePanState = this._updatePanState.bind(this);
     this.getScaledDims = this.getScaledDims.bind(this);
     this.captureFrameAndCrop = this.captureFrameAndCrop.bind(this);
-  }
-
-  componentWillMount() {
+    // the PanResponder
     this._panResponder = PanResponder.create({
-      // onStartShouldSetPanResponder: () => !this.state.animating && this.props.panning,
+      onStartShouldSetPanResponder: () => !this.state.animating && this.props.panning,
       onMoveShouldSetPanResponder: () => !this.state.animating && this.props.panning,
       onPanResponderMove: this._handlePanResponderMove,
       onPanResponderRelease: this._handlePanResponderEnd,
@@ -289,9 +287,15 @@ export class ViewEditor extends Component {
         size,
       }, uri => resolve(uri), () => null)
     );
-    return this.surface.captureFrame({ quality: 1, format: 'file', type: 'jpg', filePath: `${RNFS.DocumentDirectoryPath}/${new Date().getTime()}.jpg`})
-    .then(image => cropImage(image))
-    .then(uri => uri)
+    return this.surface && this.surface.captureFrame({ quality: 1, format: 'file', type: 'jpg', filePath: `${RNFS.DocumentDirectoryPath}/${new Date().getTime()}.jpg`})
+    .then(image => {
+      console.log('before crop');
+      cropImage(image)
+    })
+    .then(uri => {
+      console.log('after crop');
+      uri
+    })
     .catch(error => console.log(error));
   }
 
