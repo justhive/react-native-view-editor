@@ -287,15 +287,9 @@ export class ViewEditor extends Component {
         size,
       }, uri => resolve(uri), () => null)
     );
-    return this.surface && this.surface.captureFrame({ quality: 1, format: 'file', type: 'jpg', filePath: `${RNFS.DocumentDirectoryPath}/${new Date().getTime()}.jpg`})
-    .then(image => {
-      console.log('before crop');
-      cropImage(image)
-    })
-    .then(uri => {
-      console.log('after crop');
-      uri
-    })
+    return this.surface.captureFrame({ quality: 1, format: 'file', type: 'jpg', filePath: `${RNFS.DocumentDirectoryPath}/${new Date().getTime()}.jpg`})
+    .then(image => cropImage(image))
+    .then(uri => uri)
     .catch(error => console.log(error));
   }
 
