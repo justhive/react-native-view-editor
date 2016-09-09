@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import RNFS from 'react-native-fs';
 import { Surface, AnimatedSurface } from 'gl-react-native';
+import { cloneDeep } from 'lodash';
 import { distance, angle, center } from './utilities';
 const { width, height } = Dimensions.get('window');
 
@@ -38,6 +39,8 @@ export class ViewEditor extends Component {
     croppingRequired: PropTypes.bool.isRequired,
     // used for multi-images
     bigContainerWidth: PropTypes.number,
+    bigContainerHeight: PropTypes.number,
+    requiresMinScale: PropTypes.bool
   }
 
   static defaultProps = {
@@ -50,13 +53,21 @@ export class ViewEditor extends Component {
     rotate: false,
     panning: true,
     croppingRequired: false,
+    requiresMinScale: false,
   }
 
   constructor(props, context) {
     super(props, context);
-    const relativeWidth = props.bigContainerWidth || props.imageContainerWidth
+    const relativeWidth = props.bigContainerWidth || props.imageContainerWidth;
+    const relativeHeight = props.bigContainerHeight || props.imageContainerHeight;
+    if (props.requiresMinScale) {
+      this._minScale = relativeHeight / props.imageHeight < relativeWidth / props.imageWidth ? relativeWidth / props.imageWidth : relativeHeight / props.imageHeight;
+    } else {
+      this._minScale = relativeHeight / props.imageHeight > relativeWidth / props.imageWidth ? relativeWidth / props.imageWidth : relativeHeight / props.imageHeight;
+    }
+    this._scale = this._minScale;
     this.state = {
-      scale: new Animated.Value(relativeWidth / props.imageWidth),
+      scale: new Animated.Value(this._scale),
       pan: new Animated.ValueXY(),
       angle: new Animated.Value('0deg'),
       animating: false,
@@ -68,10 +79,10 @@ export class ViewEditor extends Component {
     this.panListener = null;
     this.currentPanValue = { x: 0, y: 0 };
     this._pan = { x: 0, y: 0 };
+    this.initialPan = null;
     // scaling variables
     this.scaleListener = null;
     this.currentScaleValue = 1;
-    this._scale = relativeWidth / props.imageWidth;
     // angle variables
     this.angleListener = null;
     this.currentAngleValue = 0;
@@ -81,6 +92,7 @@ export class ViewEditor extends Component {
     this._previousAngle = 0;
     this._previousCenter = 0;
     this._multiTouch = false;
+
     // methods
     this._handlePanResponderMove = this._handlePanResponderMove.bind(this);
     this._handlePanResponderEnd = this._handlePanResponderEnd.bind(this);
@@ -90,6 +102,7 @@ export class ViewEditor extends Component {
     this._updatePanState = this._updatePanState.bind(this);
     this.getScaledDims = this.getScaledDims.bind(this);
     this.captureFrameAndCrop = this.captureFrameAndCrop.bind(this);
+    this.getCurrentState = this.getCurrentState.bind(this);
     // the PanResponder
     this._panResponder = PanResponder.create({
       onStartShouldSetPanResponder: () => !this.state.animating && this.props.panning,
@@ -164,6 +177,9 @@ export class ViewEditor extends Component {
   }
 
   _updatePanState(x = this.currentPanValue.x, y = this.currentPanValue.y) {
+    if (this.initialPan === null && this.currentPanValue.x !== 0 && this.currentPanValue.y !== 0) {
+      this.initialPan = cloneDeep(this.currentPanValue);
+    }
     this.state.pan.setOffset({ x, y });
     this.state.pan.setValue({ x: 0, y: 0 });
     this.setState({ animating: false, render: true });
@@ -223,8 +239,10 @@ export class ViewEditor extends Component {
       this._previousAngle = 0;
       this._previousCenter = 0;
       const { maskWidth, maskHeight } = this.props;
-      if (imageWidth * this._scale < maskWidth) {
-        this._updateSize(maskWidth / imageWidth);
+      if (this._minScale > this._scale) {
+        this._updateSize(this._minScale);
+      } else if (this._scale > 1) {
+        this._updateSize(1)
       } else {
         this._checkAdjustment();
       }
@@ -291,6 +309,21 @@ export class ViewEditor extends Component {
     .then(image => cropImage(image))
     .then(uri => uri)
     .catch(error => console.log(error));
+  }
+
+  getCurrentState() {
+    const {
+      imageWidth,
+      imageHeight,
+      imageContainerWidth,
+      imageContainerHeight,
+    } = this.props;
+    return {
+      xDiff: (imageWidth - this._scale * imageWidth) / 2 - this.currentPanValue.x,
+      yDiff: (imageHeight - this._scale * imageHeight) / 2 - this.currentPanValue.y,
+      xDist: this._scale * imageWidth < imageContainerWidth ? imageWidth : imageWidth - (this._scale - imageContainerWidth / imageWidth) * imageWidth,
+      yDist: this._scale * imageHeight < imageContainerHeight ? imageHeight : imageHeight - (this._scale - imageContainerHeight / imageHeight) * imageHeight,
+    }
   }
 
   render() {
