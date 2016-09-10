@@ -40,7 +40,9 @@ export class ViewEditor extends Component {
     // used for multi-images
     bigContainerWidth: PropTypes.number,
     bigContainerHeight: PropTypes.number,
-    requiresMinScale: PropTypes.bool
+    requiresMinScale: PropTypes.bool,
+    initialScale: PropTypes.number,
+    initialPan: PropTypes.object,
   }
 
   static defaultProps = {
@@ -54,6 +56,8 @@ export class ViewEditor extends Component {
     panning: true,
     croppingRequired: false,
     requiresMinScale: false,
+    initialScale: null,
+    initialPan: null,
   }
 
   constructor(props, context) {
@@ -67,8 +71,8 @@ export class ViewEditor extends Component {
     }
     this._scale = this._minScale;
     this.state = {
-      scale: new Animated.Value(this._scale),
-      pan: new Animated.ValueXY(),
+      scale: new Animated.Value(props.initialScale || this._scale),
+      pan: new Animated.ValueXY(props.initialPan),
       angle: new Animated.Value('0deg'),
       animating: false,
       render: false,
@@ -284,26 +288,11 @@ export class ViewEditor extends Component {
     };
   }
 
-  captureFrameAndCrop() {
-    const { imageWidth, imageHeight, imageContainerWidth, imageContainerHeight } = this.props;
-    const { value: scale } = this.currentScaleValue;
-    const scaleFactor = {
-      x: scale * imageWidth > imageContainerWidth ? (scale - imageContainerWidth / imageWidth) * imageContainerWidth : 0,
-      y: scale * imageHeight > imageContainerHeight ? (scale - imageContainerHeight / imageHeight) * imageContainerHeight : 0,
-    };
-    const offset = {
-      x: (imageWidth - imageContainerWidth) / 2 + this.currentPanValue.x + scaleFactor.x,
-      y: (imageHeight - imageContainerHeight) / 2 + this.currentPanValue.y + scaleFactor.y,
-    };
-    const size = {
-      width: imageWidth - offset.x,
-      height: imageHeight - offset.y,
-    };
+  captureFrameAndCrop(captureProperties = null) {
+    const properties = captureProperties || this.getCurrentState();
+    console.log(properties);
     const cropImage = (image) => new Promise(resolve =>
-      ImageEditor.cropImage(image, {
-        offset,
-        size,
-      }, uri => resolve(uri), () => null)
+      ImageEditor.cropImage(image, properties, uri => resolve(uri), () => null)
     );
     return this.surface.captureFrame({ quality: 1, format: 'file', type: 'jpg', filePath: `${RNFS.DocumentDirectoryPath}/${new Date().getTime()}.jpg`})
     .then(image => cropImage(image))
@@ -318,12 +307,18 @@ export class ViewEditor extends Component {
       imageContainerWidth,
       imageContainerHeight,
     } = this.props;
+    const subWidth = this._scale * imageWidth < imageContainerWidth ? (imageContainerWidth - this._scale * imageWidth) / 2 : 0;
+    const subHeight = this._scale * imageHeight < imageContainerHeight ? (imageContainerHeight - this._scale * imageHeight) / 2 : 0;
     return {
-      xDiff: (imageWidth - this._scale * imageWidth) / 2 - this.currentPanValue.x,
-      yDiff: (imageHeight - this._scale * imageHeight) / 2 - this.currentPanValue.y,
-      xDist: this._scale * imageWidth < imageContainerWidth ? imageWidth : imageWidth - (this._scale - imageContainerWidth / imageWidth) * imageWidth,
-      yDist: this._scale * imageHeight < imageContainerHeight ? imageHeight : imageHeight - (this._scale - imageContainerHeight / imageHeight) * imageHeight,
-    }
+      offset: {
+        x: (imageWidth - this._scale * imageWidth) / 2 + this.currentPanValue.x - subWidth,
+        y: (imageHeight - this._scale * imageHeight) / 2 + this.currentPanValue.y - subHeight,
+      },
+      size: {
+        width: this._scale * imageWidth < imageContainerWidth ? imageWidth : imageWidth - (this._scale - imageContainerWidth / imageWidth) * imageWidth,
+        height: this._scale * imageHeight < imageContainerHeight ? imageHeight : imageHeight - (this._scale - imageContainerHeight / imageHeight) * imageHeight,
+      },
+    };
   }
 
   render() {
@@ -362,7 +357,14 @@ export class ViewEditor extends Component {
 
     if (croppingRequired) {
       return (
-        <AnimatedSurface ref={ref => this.surface = ref} width={imageWidth} height={imageHeight} style={animatedStyle} {...this._panResponder.panHandlers}>
+        <AnimatedSurface
+          ref={ref => this.surface = ref}
+          width={imageWidth}
+          height={imageHeight}
+          style={animatedStyle}
+          pixelRatio={1}
+          {...this._panResponder.panHandlers}
+        >
           {children}
         </AnimatedSurface>
       );
