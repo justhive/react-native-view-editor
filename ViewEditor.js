@@ -344,7 +344,6 @@ export class ViewEditor extends Component {
     const wrapStyle = [
       style,
       styles.container,
-      { width: imageContainerWidth, height: imageContainerHeight }
     ];
 
     if (!render) {
