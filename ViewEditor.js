@@ -70,8 +70,8 @@ export class ViewEditor extends Component {
     }
     this._scale = this._minScale;
     this.state = {
-      scale: new Animated.Value(props.initialScale || this._scale),
-      pan: new Animated.ValueXY(props.initialPan),
+      scale: new Animated.Value(this._scale),
+      pan: new Animated.ValueXY(),
       angle: new Animated.Value('0deg'),
       animating: false,
       render: false,
@@ -116,10 +116,15 @@ export class ViewEditor extends Component {
   }
 
   componentDidMount() {
+    const { initialPan, initialScale } = this.props;
     this.panListener = this.state.pan.addListener(value => this.currentPanValue = value);
     this.scaleListener = this.state.scale.addListener(value => this.currentScaleValue = value);
     this.angleListener = this.state.angle.addListener(value => this.currentAngleValue = value);
-    this._checkAdjustment();
+    if (initialScale) {
+      this._updateSize(initialScale, initialPan);
+    } else {
+      this._checkAdjustment();
+    }
   }
 
   componentDidUpdate(prevProps) {
@@ -163,7 +168,7 @@ export class ViewEditor extends Component {
     });
   }
 
-  _updateSize(scale) {
+  _updateSize(scale, initialPan = false) {
     this.setState({ animating: true }, () => {
       Animated.timing(
         this.state.scale, {
@@ -174,6 +179,9 @@ export class ViewEditor extends Component {
       ).start(() => {
         this.setState({ animating: false });
         this._scale = this.currentScaleValue.value;
+        if (initialPan) {
+          this._updatePosition(initialPan.x, initialPan.y)
+        }
       });
     });
   }
@@ -280,6 +288,13 @@ export class ViewEditor extends Component {
     return {
       top: this._scale * this.props.imageHeight + this.currentPanValue.y,
       left: this._scale * this.props.imageWidth + this.currentPanValue.x,
+    };
+  }
+
+  getPanAndScale() {
+    return {
+      pan: this.currentPanValue,
+      scale: this._scale,
     };
   }
 
