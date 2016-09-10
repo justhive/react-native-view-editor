@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import RNFS from 'react-native-fs';
 import { Surface, AnimatedSurface } from 'gl-react-native';
-import { cloneDeep } from 'lodash';
 import { distance, angle, center } from './utilities';
 const { width, height } = Dimensions.get('window');
 
@@ -83,7 +82,6 @@ export class ViewEditor extends Component {
     this.panListener = null;
     this.currentPanValue = { x: 0, y: 0 };
     this._pan = { x: 0, y: 0 };
-    this.initialPan = null;
     // scaling variables
     this.scaleListener = null;
     this.currentScaleValue = 1;
@@ -181,9 +179,6 @@ export class ViewEditor extends Component {
   }
 
   _updatePanState(x = this.currentPanValue.x, y = this.currentPanValue.y) {
-    if (this.initialPan === null && this.currentPanValue.x !== 0 && this.currentPanValue.y !== 0) {
-      this.initialPan = cloneDeep(this.currentPanValue);
-    }
     this.state.pan.setOffset({ x, y });
     this.state.pan.setValue({ x: 0, y: 0 });
     this.setState({ animating: false, render: true });
