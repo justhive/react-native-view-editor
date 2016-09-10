@@ -290,7 +290,6 @@ export class ViewEditor extends Component {
 
   captureFrameAndCrop(captureProperties = null) {
     const properties = captureProperties || this.getCurrentState();
-    console.log(properties);
     const cropImage = (image) => new Promise(resolve =>
       ImageEditor.cropImage(image, properties, uri => resolve(uri), () => null)
     );
@@ -309,14 +308,16 @@ export class ViewEditor extends Component {
     } = this.props;
     const subWidth = this._scale * imageWidth < imageContainerWidth ? (imageContainerWidth - this._scale * imageWidth) / 2 : 0;
     const subHeight = this._scale * imageHeight < imageContainerHeight ? (imageContainerHeight - this._scale * imageHeight) / 2 : 0;
+    const roundWidth = Math.floor(this._scale * imageWidth < imageContainerWidth ? imageWidth : imageWidth - (this._scale - imageContainerWidth / imageWidth) * imageWidth);
+    const roundHeight = Math.floor(this._scale * imageHeight < imageContainerHeight ? imageHeight : imageHeight - (this._scale - imageContainerHeight / imageHeight) * imageHeight);
     return {
       offset: {
         x: (imageWidth - this._scale * imageWidth) / 2 + this.currentPanValue.x - subWidth,
         y: (imageHeight - this._scale * imageHeight) / 2 + this.currentPanValue.y - subHeight,
       },
       size: {
-        width: this._scale * imageWidth < imageContainerWidth ? imageWidth : imageWidth - (this._scale - imageContainerWidth / imageWidth) * imageWidth,
-        height: this._scale * imageHeight < imageContainerHeight ? imageHeight : imageHeight - (this._scale - imageContainerHeight / imageHeight) * imageHeight,
+        width: roundWidth,
+        height: roundHeight,
       },
     };
   }
