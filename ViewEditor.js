@@ -348,8 +348,6 @@ export class ViewEditor extends Component {
       croppingRequired,
     } = this.props;
 
-    console.log(initialRotate);
-
     const layout = pan.getLayout();
     const animatedStyle = {
       transform: [
@@ -358,12 +356,13 @@ export class ViewEditor extends Component {
         { scale },
       ]
     };
+
     if (initialRotate) {
       animatedStyle.transform.push({ rotate: initialRotate });
-    }
-    if (rotate) {
+    } else if (rotate) {
       animatedStyle.transform.push({ rotate: this.state.angle });
     }
+
     const wrapStyle = [
       style,
       styles.container,
