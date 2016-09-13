@@ -42,6 +42,7 @@ export class ViewEditor extends Component {
     requiresMinScale: PropTypes.bool,
     initialScale: PropTypes.number,
     initialPan: PropTypes.object,
+    initialRotate: PropTypes.string,
   }
 
   static defaultProps = {
@@ -343,16 +344,23 @@ export class ViewEditor extends Component {
       children,
       rotate,
       style,
+      initialRotate,
       croppingRequired,
     } = this.props;
+
+    console.log(initialRotate);
+
     const layout = pan.getLayout();
     const animatedStyle = {
       transform: [
         { translateX: layout.left },
         { translateY: layout.top },
-        { scale }
+        { scale },
       ]
     };
+    if (initialRotate) {
+      animatedStyle.transform.push({ rotate: initialRotate });
+    }
     if (rotate) {
       animatedStyle.transform.push({ rotate: this.state.angle });
     }
