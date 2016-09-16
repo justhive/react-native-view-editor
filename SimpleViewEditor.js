@@ -6,11 +6,7 @@ import {
   Animated,
   Easing,
   StyleSheet,
-  ImageEditor,
-  Image,
 } from 'react-native';
-import RNFS from 'react-native-fs';
-import { Surface, AnimatedSurface } from 'gl-react-native';
 import { distance, angle, center } from './utilities';
 const { width, height } = Dimensions.get('window');
 
@@ -35,14 +31,8 @@ export class ViewEditor extends Component {
     rotate: PropTypes.bool,
     panning: PropTypes.bool,
     center: PropTypes.bool.isRequired,
-    croppingRequired: PropTypes.bool.isRequired,
     // used for multi-images
     bigContainerWidth: PropTypes.number,
-    bigContainerHeight: PropTypes.number,
-    requiresMinScale: PropTypes.bool,
-    initialScale: PropTypes.number,
-    initialPan: PropTypes.object,
-    initialRotate: PropTypes.string,
   }
 
   static defaultProps = {
@@ -54,31 +44,19 @@ export class ViewEditor extends Component {
     center: true,
     rotate: false,
     panning: true,
-    croppingRequired: false,
-    requiresMinScale: false,
-    initialScale: null,
-    initialPan: null,
   }
 
   constructor(props, context) {
     super(props, context);
-    const relativeWidth = props.bigContainerWidth || props.imageContainerWidth;
-    const relativeHeight = props.bigContainerHeight || props.imageContainerHeight;
-    if (props.requiresMinScale) {
-      this._minScale = relativeHeight / props.imageHeight < relativeWidth / props.imageWidth ? relativeWidth / props.imageWidth : relativeHeight / props.imageHeight;
-    } else {
-      this._minScale = relativeHeight / props.imageHeight > relativeWidth / props.imageWidth ? relativeWidth / props.imageWidth : relativeHeight / props.imageHeight;
-    }
-    this._scale = this._minScale;
+    const relativeWidth = props.bigContainerWidth || props.imageContainerWidth
     this.state = {
-      scale: new Animated.Value(this._scale),
+      scale: new Animated.Value(relativeWidth / props.imageWidth),
       pan: new Animated.ValueXY(),
       angle: new Animated.Value('0deg'),
       animating: false,
       render: false,
     };
-    // ref of the surface to capture
-    this.surface = null;
+    this._panResponder = {};
     // panning variables
     this.panListener = null;
     this.currentPanValue = { x: 0, y: 0 };
@@ -86,6 +64,7 @@ export class ViewEditor extends Component {
     // scaling variables
     this.scaleListener = null;
     this.currentScaleValue = 1;
+    this._scale = relativeWidth / props.imageWidth;
     // angle variables
     this.angleListener = null;
     this.currentAngleValue = 0;
@@ -95,7 +74,6 @@ export class ViewEditor extends Component {
     this._previousAngle = 0;
     this._previousCenter = 0;
     this._multiTouch = false;
-
     // methods
     this._handlePanResponderMove = this._handlePanResponderMove.bind(this);
     this._handlePanResponderEnd = this._handlePanResponderEnd.bind(this);
@@ -103,10 +81,10 @@ export class ViewEditor extends Component {
     this._updateSize = this._updateSize.bind(this);
     this._checkAdjustment = this._checkAdjustment.bind(this);
     this._updatePanState = this._updatePanState.bind(this);
-    this.getScaledDims = this.getScaledDims.bind(this);
-    this.captureFrameAndCrop = this.captureFrameAndCrop.bind(this);
-    this.getCurrentState = this.getCurrentState.bind(this);
-    // the PanResponder
+
+  }
+
+  componentWillMount() {
     this._panResponder = PanResponder.create({
       onStartShouldSetPanResponder: () => !this.state.animating && this.props.panning,
       onMoveShouldSetPanResponder: () => !this.state.animating && this.props.panning,
@@ -117,15 +95,10 @@ export class ViewEditor extends Component {
   }
 
   componentDidMount() {
-    const { initialPan, initialScale } = this.props;
     this.panListener = this.state.pan.addListener(value => this.currentPanValue = value);
     this.scaleListener = this.state.scale.addListener(value => this.currentScaleValue = value);
     this.angleListener = this.state.angle.addListener(value => this.currentAngleValue = value);
-    if (initialScale) {
-      this._updateSize(initialScale, initialPan);
-    } else {
-      this._checkAdjustment();
-    }
+    this._checkAdjustment();
   }
 
   componentDidUpdate(prevProps) {
@@ -169,7 +142,7 @@ export class ViewEditor extends Component {
     });
   }
 
-  _updateSize(scale, initialPan = false) {
+  _updateSize(scale) {
     this.setState({ animating: true }, () => {
       Animated.timing(
         this.state.scale, {
@@ -180,9 +153,6 @@ export class ViewEditor extends Component {
       ).start(() => {
         this.setState({ animating: false });
         this._scale = this.currentScaleValue.value;
-        if (initialPan) {
-          this._updatePosition(initialPan.x, initialPan.y)
-        }
       });
     });
   }
@@ -236,7 +206,7 @@ export class ViewEditor extends Component {
   }
 
   _handlePanResponderEnd() {
-    const { imageWidth, imageHeight, imageContainerWidth, imageContainerHeight } = this.props;
+    const { imageWidth, imageHeight } = this.props;
     this._pan = this.currentPanValue;
     this._updatePanState();
     if (this._multiTouch) {
@@ -247,10 +217,8 @@ export class ViewEditor extends Component {
       this._previousAngle = 0;
       this._previousCenter = 0;
       const { maskWidth, maskHeight } = this.props;
-      if (this._minScale > this._scale) {
-        this._updateSize(this._minScale);
-      } else if (this._scale > 1) {
-        this._updateSize(1)
+      if (imageWidth * this._scale < maskWidth) {
+        this._updateSize(maskWidth / imageWidth);
       } else {
         this._checkAdjustment();
       }
@@ -285,54 +253,6 @@ export class ViewEditor extends Component {
     this._updatePosition(positionUpdate.x, positionUpdate.y);
   }
 
-  getScaledDims() {
-    return {
-      top: this._scale * this.props.imageHeight + this.currentPanValue.y,
-      left: this._scale * this.props.imageWidth + this.currentPanValue.x,
-    };
-  }
-
-  getPanAndScale() {
-    return {
-      pan: this.currentPanValue,
-      scale: this._scale,
-    };
-  }
-
-  captureFrameAndCrop(captureProperties) {
-    const properties = this.getCurrentState(captureProperties);
-    const cropImage = (image) => new Promise(resolve =>
-      ImageEditor.cropImage(image, properties, uri => resolve(uri), () => null)
-    );
-    return this.surface.captureFrame({ quality: 1, format: 'file', type: 'jpg', filePath: `${RNFS.DocumentDirectoryPath}/${new Date().getTime()}.jpg`})
-    .then(image => cropImage(image))
-    .then(uri => uri)
-    .catch(error => console.log(error));
-  }
-
-  getCurrentState({ pan, scale }) {
-    const {
-      imageWidth,
-      imageHeight,
-      imageContainerWidth,
-      imageContainerHeight,
-    } = this.props;
-    const subWidth = scale * imageWidth < imageContainerWidth ? (imageContainerWidth - scale * imageWidth) / 2 : 0;
-    const subHeight = scale * imageHeight < imageContainerHeight ? (imageContainerHeight - scale * imageHeight) / 2 : 0;
-    const roundWidth = Math.floor(scale * imageWidth < imageContainerWidth ? imageWidth : imageWidth - (scale - imageContainerWidth / imageWidth) * imageWidth);
-    const roundHeight = Math.floor(scale * imageHeight < imageContainerHeight ? imageHeight : imageHeight - (scale - imageContainerHeight / imageHeight) * imageHeight);
-    return {
-      offset: {
-        x: (imageWidth - scale * imageWidth) / 2 + pan.x - subWidth,
-        y: (imageHeight - scale * imageHeight) / 2 + pan.y - subHeight,
-      },
-      size: {
-        width: roundWidth,
-        height: roundHeight,
-      },
-    };
-  }
-
   render() {
     const { pan, scale, render } = this.state;
     const {
@@ -344,53 +264,34 @@ export class ViewEditor extends Component {
       children,
       rotate,
       style,
-      initialRotate,
-      croppingRequired,
+      panning,
     } = this.props;
-
     const layout = pan.getLayout();
     const animatedStyle = {
+      height: imageHeight,
+      width: imageWidth,
       transform: [
         { translateX: layout.left },
         { translateY: layout.top },
-        { scale },
+        { scale }
       ]
     };
-
-    if (initialRotate) {
-      animatedStyle.transform.push({ rotate: initialRotate });
-    } else if (rotate) {
+    if (rotate) {
       animatedStyle.transform.push({ rotate: this.state.angle });
     }
-
-    const wrapStyle = [
-      style,
-      styles.container,
-    ];
-
-    if (!render) {
-      return null;
-    }
-
-    if (croppingRequired) {
-      return (
-        <AnimatedSurface
-          ref={ref => this.surface = ref}
-          width={imageWidth}
-          height={imageHeight}
-          style={animatedStyle}
-          pixelRatio={1}
-          {...this._panResponder.panHandlers}
-        >
-          {children}
-        </AnimatedSurface>
-      );
-    }
-
     return (
-      <View style={wrapStyle} {...this._panResponder.panHandlers}>
-        <Animated.View style={animatedStyle}>
-          {children}
+      <View
+        style={[
+          style,
+          styles.container,
+          { width: imageContainerWidth, height: imageContainerHeight }
+        ]}
+        {...this._panResponder.panHandlers}
+      >
+        <Animated.View
+          style={animatedStyle}
+        >
+          {render && children()}
         </Animated.View>
         {imageMask && React.createElement(imageMask)}
       </View>
