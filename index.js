@@ -1,2 +1,2 @@
 export { ViewEditor as default } from './ViewEditor';
-export { SimpleViewEditor } from './SimpleViewEditor';
+export { ViewEditor as SimpleViewEditor } from './SimpleViewEditor';
