@@ -291,7 +291,7 @@ export class ViewEditor extends Component {
         <Animated.View
           style={animatedStyle}
         >
-          {render && children()}
+          {render && children}
         </Animated.View>
         {imageMask && React.createElement(imageMask)}
       </View>
