@@ -165,7 +165,7 @@ export class ViewEditor extends Component {
           easing: Easing.elastic(1),
           duration: 250
         }
-      ).start(() => this._updatePanState())
+      ).start(() => this._updatePanState());
     });
   }
 
@@ -181,7 +181,7 @@ export class ViewEditor extends Component {
         this.setState({ animating: false });
         this._scale = this.currentScaleValue.value;
         if (initialPan) {
-          this._updatePosition(initialPan.x, initialPan.y)
+          this._updatePosition(initialPan.x, initialPan.y);
         }
       });
     });
@@ -250,7 +250,7 @@ export class ViewEditor extends Component {
       if (this._minScale > this._scale) {
         this._updateSize(this._minScale);
       } else if (this._scale > 1) {
-        this._updateSize(1)
+        this._updateSize(1);
       } else {
         this._checkAdjustment();
       }
@@ -304,7 +304,12 @@ export class ViewEditor extends Component {
     const cropImage = (image) => new Promise(resolve =>
       ImageEditor.cropImage(image, properties, uri => resolve(uri), () => null)
     );
-    return this.surface.captureFrame({ quality: 1, format: 'file', type: 'jpg', filePath: `${RNFS.DocumentDirectoryPath}/${new Date().getTime()}.jpg`})
+    return this.surface.captureFrame({
+      quality: 1,
+      format: 'file',
+      type: 'jpg',
+      filePath: `${RNFS.DocumentDirectoryPath}/${new Date().getTime()}.jpg`
+    })
     .then(image => cropImage(image))
     .then(uri => uri)
     .catch(error => console.log(error));
@@ -316,16 +321,44 @@ export class ViewEditor extends Component {
       imageHeight,
       imageContainerWidth,
       imageContainerHeight,
+      bigContainerWidth,
+      bigContainerHeight,
     } = this.props;
-    const subWidth = scale * imageWidth < imageContainerWidth ? (imageContainerWidth - scale * imageWidth) / 2 : 0;
-    const subHeight = scale * imageHeight < imageContainerHeight ? (imageContainerHeight - scale * imageHeight) / 2 : 0;
-    const roundWidth = Math.floor(scale * imageWidth < imageContainerWidth ? imageWidth : imageWidth - (scale - imageContainerWidth / imageWidth) * imageWidth);
-    const roundHeight = Math.floor(scale * imageHeight < imageContainerHeight ? imageHeight : imageHeight - (scale - imageContainerHeight / imageHeight) * imageHeight);
+    const containerWidth = bigContainerWidth || imageContainerWidth;
+    const containerHeight = bigContainerHeight || imageContainerHeight;
+    const ogScaleX = (containerWidth / imageWidth);
+    const ogScaleY = (containerHeight / imageHeight);
+    const scaleChangeX = (scale - ogScaleX) / scale;
+    const scaleChangeY = (scale - ogScaleY) / scale;
+    const roundWidth = Math.floor(scale * imageWidth < containerWidth ? imageWidth : containerWidth / scale);
+    const roundHeight = Math.floor(scale * imageHeight < containerHeight ? imageHeight : containerHeight / scale);
+    const ogPanX = (containerWidth - imageWidth) / 2;
+    const ogPanY = (containerHeight - imageHeight) / 2;
+    const xZoomOffset = imageWidth * scaleChangeX / 2 - (containerWidth - imageWidth * ogScaleX) < 0 ? 0 : imageWidth * scaleChangeX / 2 - (containerWidth - imageWidth * ogScaleX) / 2;
+    const yZoomOffset = imageHeight * scaleChangeY / 2 - (containerHeight - imageHeight * ogScaleY) < 0 ? 0 : imageHeight * scaleChangeY / 2 - (containerHeight - imageHeight * ogScaleY) / 2;
+    const xPanOffset = (ogPanX - pan.x) / scale;
+    const yPanOffset = (ogPanY - pan.y) / scale;
+
+    // amount image top left corner has moved from zooming
+    const zoomOffset = {
+      x: xZoomOffset,
+      y: yZoomOffset,
+    };
+
+    // amount image top left corner has moved from panning
+    const panOffset = {
+      x: xPanOffset,
+      y: yPanOffset
+    };
+
+    // total offset of top left corner from original state.
+    const offset = {
+      x: zoomOffset.x + panOffset.x,
+      y: zoomOffset.y + panOffset.y
+    };
+
     return {
-      offset: {
-        x: (imageWidth - scale * imageWidth) / 2 + pan.x - subWidth,
-        y: (imageHeight - scale * imageHeight) / 2 + pan.y - subHeight,
-      },
+      offset,
       size: {
         width: roundWidth,
         height: roundHeight,
@@ -338,8 +371,6 @@ export class ViewEditor extends Component {
     const {
       imageWidth,
       imageHeight,
-      imageContainerWidth,
-      imageContainerHeight,
       imageMask,
       children,
       rotate,
