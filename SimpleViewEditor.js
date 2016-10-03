@@ -31,6 +31,7 @@ export class ViewEditor extends Component {
     rotate: PropTypes.bool,
     panning: PropTypes.bool,
     center: PropTypes.bool.isRequired,
+    isLandscape: PropTypes.bool,
     // used for multi-images
     bigContainerWidth: PropTypes.number,
   }
@@ -49,8 +50,10 @@ export class ViewEditor extends Component {
   constructor(props, context) {
     super(props, context);
     const relativeWidth = props.bigContainerWidth || props.imageContainerWidth
+    const relativeHeight = props.bigContainerHeight || props.imageContainerHeight
+    const relativeDim = props.isLandscape ? relativeHeight : relativeWidth;
     this.state = {
-      scale: new Animated.Value(relativeWidth / props.imageWidth),
+      scale: new Animated.Value(relativeDim / props.imageWidth),
       pan: new Animated.ValueXY(),
       angle: new Animated.Value('0deg'),
       animating: false,
