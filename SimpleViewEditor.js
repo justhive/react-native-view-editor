@@ -93,6 +93,7 @@ export class ViewEditor extends Component {
       onMoveShouldSetPanResponder: () => !this.state.animating && this.props.panning,
       onPanResponderMove: this._handlePanResponderMove,
       onPanResponderRelease: this._handlePanResponderEnd,
+      onPanResponderEnd: this._handlePanResponderEnd,
       onPanResponderTerminate: this._handlePanResponderEnd,
     });
   }
@@ -296,7 +297,7 @@ export class ViewEditor extends Component {
         >
           {render && children}
         </Animated.View>
-        {imageMask && React.createElement(imageMask)}
+        {imageMask}
       </View>
     );
   }
