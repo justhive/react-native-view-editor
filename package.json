@@ -10,10 +10,6 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "dependencies": {
-    "gl-react-native": "git+https://github.com/doubleqliq/gl-react-native.git",
-    "react-native-fs": "1.5.1"
-  },
   "keywords": [
     "pannable",
     "image"
