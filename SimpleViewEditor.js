@@ -49,11 +49,10 @@ export class ViewEditor extends Component {
 
   constructor(props, context) {
     super(props, context);
-    const relativeWidth = props.bigContainerWidth || props.imageContainerWidth
-    const relativeHeight = props.bigContainerHeight || props.imageContainerHeight
-    const relativeDim = props.isLandscape ? relativeHeight : relativeWidth;
+    const relativeDim = props.isLandscape ? props.imageContainerHeight : props.imageContainerWidth;
+    const imageDim = props.isLandscape ? props.imageHeight : props.imageWidth;
     this.state = {
-      scale: new Animated.Value(relativeDim / props.imageWidth),
+      scale: new Animated.Value(relativeDim / imageDim),
       pan: new Animated.ValueXY(),
       angle: new Animated.Value('0deg'),
       animating: false,
@@ -67,7 +66,7 @@ export class ViewEditor extends Component {
     // scaling variables
     this.scaleListener = null;
     this.currentScaleValue = 1;
-    this._scale = relativeWidth / props.imageWidth;
+    this._scale = relativeDim / imageDim;
     // angle variables
     this.angleListener = null;
     this.currentAngleValue = 0;
@@ -93,7 +92,6 @@ export class ViewEditor extends Component {
       onMoveShouldSetPanResponder: () => !this.state.animating && this.props.panning,
       onPanResponderMove: this._handlePanResponderMove,
       onPanResponderRelease: this._handlePanResponderEnd,
-      onPanResponderEnd: this._handlePanResponderEnd,
       onPanResponderTerminate: this._handlePanResponderEnd,
     });
   }
