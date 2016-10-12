@@ -49,10 +49,9 @@ export class ViewEditor extends Component {
 
   constructor(props, context) {
     super(props, context);
-    const relativeDim = props.isLandscape ? props.imageContainerHeight : props.imageContainerWidth;
     const imageDim = props.isLandscape ? props.imageHeight : props.imageWidth;
     this.state = {
-      scale: new Animated.Value(relativeDim / imageDim),
+      scale: new Animated.Value(props.imageContainerWidth / imageDim),
       pan: new Animated.ValueXY(),
       angle: new Animated.Value('0deg'),
       animating: false,
@@ -66,7 +65,7 @@ export class ViewEditor extends Component {
     // scaling variables
     this.scaleListener = null;
     this.currentScaleValue = 1;
-    this._scale = relativeDim / imageDim;
+    this._scale = props.imageContainerWidth / imageDim;
     // angle variables
     this.angleListener = null;
     this.currentAngleValue = 0;
@@ -208,7 +207,8 @@ export class ViewEditor extends Component {
   }
 
   _handlePanResponderEnd() {
-    const { imageWidth, imageHeight } = this.props;
+    const { imageWidth, imageHeight, isLandscape } = this.props;
+    const imageDim = isLandscape ? imageHeight : imageWidth;
     this._pan = this.currentPanValue;
     this._updatePanState();
     if (this._multiTouch) {
@@ -219,8 +219,8 @@ export class ViewEditor extends Component {
       this._previousAngle = 0;
       this._previousCenter = 0;
       const { maskWidth, maskHeight } = this.props;
-      if (imageWidth * this._scale < maskWidth) {
-        this._updateSize(maskWidth / imageWidth);
+      if (imageDim * this._scale < maskWidth) {
+        this._updateSize(maskWidth / imageDim);
       } else if (this._scale > 1) {
         this._updateSize(1);
       }
@@ -229,7 +229,9 @@ export class ViewEditor extends Component {
   }
 
   _checkAdjustment() {
-    const { imageContainerHeight, imageContainerWidth, maskPadding, imageHeight, imageWidth, center } = this.props;
+    const { imageContainerHeight, imageContainerWidth, maskPadding, imageHeight: tempHeight, imageWidth: tempWidth, center, isLandscape } = this.props;
+    const imageHeight = isLandscape ? tempWidth : tempHeight;
+    const imageWidth = isLandscape ? tempHeight : tempWidth;
     const widthDiff = this._scale * imageWidth - imageContainerWidth;
     const heightDiff = this._scale * imageHeight - imageContainerHeight;
     const maskPaddingDiffX = widthDiff < 0 && center ? -widthDiff / 2 : maskPadding;
@@ -237,8 +239,8 @@ export class ViewEditor extends Component {
     const positionUpdate = { x: 0, y: 0 };
     const imageLeft = this.currentPanValue.x + widthDiff + maskPaddingDiffX;
     const imageAbove = this.currentPanValue.y + heightDiff + maskPaddingDiffY;
-    const additionalWidth = (imageWidth - this._scale * imageWidth) / 2;
-    const additionalHeight = (imageHeight - this._scale * imageHeight) / 2;
+    const additionalWidth = (tempWidth - this._scale * imageWidth) / 2;
+    const additionalHeight = (tempHeight - this._scale * imageHeight) / 2;
     if (this.currentPanValue.x > maskPaddingDiffX - additionalWidth) {
       positionUpdate.x = -this.currentPanValue.x - additionalWidth + maskPaddingDiffX;
     }
