@@ -221,12 +221,11 @@ export class ViewEditor extends Component {
       const { maskWidth, maskHeight } = this.props;
       if (imageWidth * this._scale < maskWidth) {
         this._updateSize(maskWidth / imageWidth);
-      } else {
-        this._checkAdjustment();
+      } else if (this._scale > 1) {
+        this._updateSize(1);
       }
-    } else {
-      this._checkAdjustment();
     }
+    this._checkAdjustment();
   }
 
   _checkAdjustment() {
