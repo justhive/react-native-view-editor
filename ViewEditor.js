@@ -134,14 +134,29 @@ export class ViewEditor extends Component {
       imageWidth,
       imageContainerWidth,
       imageContainerHeight,
+      requiresMinScale,
     } = this.props;
     const {
       imageHeight: prevImageHeight,
       imageWidth: prevImageWidth,
       imageContainerWidth: prevImageContainerWidth,
       imageContainerHeight: prevImageContainerHeight,
+      requiresMinScale: prevRequiresMinScale,
     } = prevProps;
-    if (
+    if (prevRequiresMinScale !== requiresMinScale) {
+      const relativeWidth = this.props.bigContainerWidth || this.props.imageContainerWidth;
+      const relativeHeight = this.props.bigContainerHeight || this.props.imageContainerHeight;
+      if (requiresMinScale) {
+        this._minScale = relativeHeight / this.props.imageHeight < relativeWidth / this.props.imageWidth ?
+          relativeWidth / this.props.imageWidth :
+          relativeHeight / this.props.imageHeight;
+        this._updateSize(this._minScale);
+      } else  {
+        this._minScale = relativeHeight / this.props.imageHeight > relativeWidth / this.props.imageWidth ?
+          relativeWidth / this.props.imageWidth :
+          relativeHeight / this.props.imageHeight;
+      }
+    } else if (
       imageHeight !== prevImageHeight ||
       imageWidth !== prevImageWidth ||
       imageContainerWidth !== prevImageContainerWidth ||
