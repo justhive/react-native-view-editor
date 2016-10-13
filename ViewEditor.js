@@ -251,12 +251,9 @@ export class ViewEditor extends Component {
         this._updateSize(this._minScale);
       } else if (this._scale > 1) {
         this._updateSize(1);
-      } else {
-        this._checkAdjustment();
       }
-    } else {
-      this._checkAdjustment();
     }
+    this._checkAdjustment();
   }
 
   _checkAdjustment() {
