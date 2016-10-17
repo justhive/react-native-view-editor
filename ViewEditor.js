@@ -43,6 +43,8 @@ export class ViewEditor extends Component {
     initialScale: PropTypes.number,
     initialPan: PropTypes.object,
     initialRotate: PropTypes.string,
+    onPressCallback: PropTypes.func,
+    onLongPressCallback: PropTypes.func,
   }
 
   static defaultProps = {
@@ -95,8 +97,14 @@ export class ViewEditor extends Component {
     this._previousAngle = 0;
     this._previousCenter = 0;
     this._multiTouch = false;
+    // used for callbacks
+    this._onPress = null;
+    this._onLongPress = null;
+    this._totalMovedX = 0;
+    this._totalMovedY = 0;
 
     // methods
+    this._handlePanResponderGrant = this._handlePanResponderGrant.bind(this);
     this._handlePanResponderMove = this._handlePanResponderMove.bind(this);
     this._handlePanResponderEnd = this._handlePanResponderEnd.bind(this);
     this._updatePosition = this._updatePosition.bind(this);
@@ -108,8 +116,9 @@ export class ViewEditor extends Component {
     this.getCurrentState = this.getCurrentState.bind(this);
     // the PanResponder
     this._panResponder = PanResponder.create({
-      onStartShouldSetPanResponder: () => !this.state.animating && this.props.panning,
-      onMoveShouldSetPanResponder: () => !this.state.animating && this.props.panning,
+      onStartShouldSetPanResponder: (e, g) => !this.state.animating && this.props.panning,
+      onMoveShouldSetPanResponder: (e, g) => !this.state.animating && this.props.panning,
+      onPanResponderGrant: this._handlePanResponderGrant,
       onPanResponderMove: this._handlePanResponderMove,
       onPanResponderRelease: this._handlePanResponderEnd,
       onPanResponderTerminate: this._handlePanResponderEnd,
@@ -170,6 +179,12 @@ export class ViewEditor extends Component {
     this.state.pan.removeListener(this.panListener);
     this.state.scale.removeListener(this.scaleListener);
     this.state.angle.removeListener(this.angleListener);
+    if (this._onPress) {
+      clearTimeout(this._onPress);
+    }
+    if (this._onLongPress) {
+      clearTimeout(this._onLongPress);
+    }
   }
 
   _updatePosition(x, y) {
@@ -208,9 +223,33 @@ export class ViewEditor extends Component {
     this.setState({ animating: false, render: true });
   }
 
+  _handlePanResponderGrant(e, gestureState) {
+    const { onPressCallback, onLongPressCallback } = this.props;
+    if (onPressCallback) {
+      this._onPress = setTimeout(() => {
+        clearTimeout(this._onPress);
+        this._onPress = null;
+      }, 200);
+    }
+    if (onLongPressCallback) {
+      this._onLongPress = setTimeout(() => {
+        clearTimeout(this._onLongPress);
+        this._onLongPress = null;
+      }, 500)
+    }
+  }
+
   _handlePanResponderMove(e, gestureState) {
-    const { imageContainerWidth, imageWidth, imageHeight } = this.props;
+    const { imageContainerWidth, imageWidth, imageHeight, onLongPressCallback } = this.props;
     if (gestureState.numberActiveTouches === 1 && !this._multiTouch) {
+      this._totalMovedX += Math.abs(gestureState.dx);
+      this._totalMovedY += Math.abs(gestureState.dy);
+      if (
+        !this._onLongPress && onLongPressCallback &&
+        (this._totalMovedX < 50 && this._totalMovedY < 50)
+      ) {
+        return onLongPressCallback();
+      }
       return Animated.event([
         null, { dx: this.state.pan.x, dy: this.state.pan.y }
       ])(e, gestureState);
@@ -251,6 +290,15 @@ export class ViewEditor extends Component {
   }
 
   _handlePanResponderEnd() {
+    if (this._onPress && (
+      (this._totalMovedX < 30 && this._totalMovedY < 30)
+    )) {
+      clearTimeout(this._onPress);
+      this._onPress = null;
+      this.props.onPressCallback();
+    }
+    this._totalMovedX = 0;
+    this._totalMovedY = 0;
     const { imageWidth, imageHeight, imageContainerWidth, imageContainerHeight } = this.props;
     this._pan = this.currentPanValue;
     this._updatePanState();
