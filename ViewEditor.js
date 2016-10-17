@@ -45,6 +45,7 @@ export class ViewEditor extends Component {
     initialRotate: PropTypes.string,
     onPressCallback: PropTypes.func,
     onLongPressCallback: PropTypes.func,
+    onLongPressReleaseCallback: PropTypes.func,
   }
 
   static defaultProps = {
@@ -102,6 +103,7 @@ export class ViewEditor extends Component {
     this._onLongPress = null;
     this._totalMovedX = 0;
     this._totalMovedY = 0;
+    this._onLongPressSuccess = false;
 
     // methods
     this._handlePanResponderGrant = this._handlePanResponderGrant.bind(this);
@@ -248,6 +250,7 @@ export class ViewEditor extends Component {
         !this._onLongPress && onLongPressCallback &&
         (this._totalMovedX < 50 && this._totalMovedY < 50)
       ) {
+        this._onLongPressSuccess = true;
         return onLongPressCallback();
       }
       return Animated.event([
@@ -296,6 +299,14 @@ export class ViewEditor extends Component {
       clearTimeout(this._onPress);
       this._onPress = null;
       this.props.onPressCallback();
+    }
+    if (this._onLongPress) {
+      clearTimeout(this._onLongPress);
+      this.onLongPress = null;
+    }
+    if (this._onLongPressSuccess) {
+      this._onLongPressSuccess = false;
+      this.props.onLongPressReleaseCallback();
     }
     this._totalMovedX = 0;
     this._totalMovedY = 0;
