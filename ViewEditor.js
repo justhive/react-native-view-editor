@@ -307,7 +307,9 @@ export class ViewEditor extends Component {
     }
     if (this._onLongPressSuccess) {
       this._onLongPressSuccess = false;
-      this.props.onLongPressReleaseCallback();
+      if (this.props.onLongPressReleaseCallback) {
+        this.props.onLongPressReleaseCallback();
+      }
     }
     this._totalMovedX = 0;
     this._totalMovedY = 0;
