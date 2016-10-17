@@ -248,7 +248,8 @@ export class ViewEditor extends Component {
       this._totalMovedY += Math.abs(gestureState.dy);
       if (
         !this._onLongPress && onLongPressCallback &&
-        (this._totalMovedX < 50 && this._totalMovedY < 50)
+        (this._totalMovedX < 50 && this._totalMovedY < 50) &&
+        !this._onLongPressSuccess
       ) {
         this._onLongPressSuccess = true;
         return onLongPressCallback();
