@@ -154,6 +154,7 @@ export class ViewEditor extends Component {
       imageContainerHeight: prevImageContainerHeight,
       requiresMinScale: prevRequiresMinScale,
     } = prevProps;
+
     if (prevRequiresMinScale !== requiresMinScale) {
       const relativeWidth = this.props.bigContainerWidth || this.props.imageContainerWidth;
       const relativeHeight = this.props.bigContainerHeight || this.props.imageContainerHeight;
@@ -389,7 +390,7 @@ export class ViewEditor extends Component {
     .catch(error => console.log(error));
   }
 
-  getCurrentState({ pan, scale }) {
+  getCurrentState({ pan, scale, layout, imageLength }) {
     const {
       imageWidth,
       imageHeight,
@@ -404,14 +405,26 @@ export class ViewEditor extends Component {
     const ogScaleY = (containerHeight / imageHeight);
     const scaleChangeX = (scale - ogScaleX) / scale;
     const scaleChangeY = (scale - ogScaleY) / scale;
-    const roundWidth = Math.floor(scale * imageWidth < containerWidth ? imageWidth : containerWidth / scale);
-    const roundHeight = Math.floor(scale * imageHeight < containerHeight ? imageHeight : containerHeight / scale);
+    let roundWidth = Math.floor(scale * imageWidth < containerWidth ? imageWidth : containerWidth / scale);
+    let roundHeight = Math.floor(scale * imageHeight < containerHeight ? imageHeight : containerHeight / scale);
     const ogPanX = (containerWidth - imageWidth) / 2;
     const ogPanY = (containerHeight - imageHeight) / 2;
     const xZoomOffset = imageWidth * scaleChangeX / 2 - (containerWidth - imageWidth * ogScaleX) < 0 ? 0 : imageWidth * scaleChangeX / 2 - (containerWidth - imageWidth * ogScaleX) / 2;
     const yZoomOffset = imageHeight * scaleChangeY / 2 - (containerHeight - imageHeight * ogScaleY) < 0 ? 0 : imageHeight * scaleChangeY / 2 - (containerHeight - imageHeight * ogScaleY) / 2;
     const xPanOffset = (ogPanX - pan.x) / scale;
     const yPanOffset = (ogPanY - pan.y) / scale;
+
+    // for multiImages
+    if (imageLength > 1) {
+      if (layout === 'quad') {
+        roundWidth = roundWidth / 2;
+        roundHeight = roundHeight / 2;
+      } else if (layout === 'horizontal') {
+        roundHeight = roundHeight / imageLength;
+      } else if (layout === 'vertical') {
+        roundWidth = roundWidth / imageLength
+      }
+    }
 
     // amount image top left corner has moved from zooming
     const zoomOffset = {
@@ -485,6 +498,8 @@ export class ViewEditor extends Component {
           height={imageHeight}
           style={animatedStyle}
           pixelRatio={1}
+          visibleContent={true}
+          preload={true}
           {...this._panResponder.panHandlers}
         >
           {children}
