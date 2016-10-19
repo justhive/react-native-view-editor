@@ -32,6 +32,7 @@ export class ViewEditor extends Component {
     panning: PropTypes.bool,
     center: PropTypes.bool.isRequired,
     isLandscape: PropTypes.bool,
+    isLong: PropTypes.bool,
     // used for multi-images
     bigContainerWidth: PropTypes.number,
   }
@@ -49,9 +50,10 @@ export class ViewEditor extends Component {
 
   constructor(props, context) {
     super(props, context);
-    const imageDim = props.isLandscape ? props.imageHeight : props.imageWidth;
+    const imageDim = props.isLandscape || props.isLong ? props.imageHeight : props.imageWidth;
+    const containerDim = props.isLong ? props.imageContainerHeight : props.imageContainerWidth
     this.state = {
-      scale: new Animated.Value(props.imageContainerWidth / imageDim),
+      scale: new Animated.Value(containerDim / imageDim),
       pan: new Animated.ValueXY(),
       angle: new Animated.Value('0deg'),
       animating: false,
@@ -65,7 +67,7 @@ export class ViewEditor extends Component {
     // scaling variables
     this.scaleListener = null;
     this.currentScaleValue = 1;
-    this._scale = props.imageContainerWidth / imageDim;
+    this._scale = containerDim / imageDim;
     // angle variables
     this.angleListener = null;
     this.currentAngleValue = 0;
@@ -207,8 +209,9 @@ export class ViewEditor extends Component {
   }
 
   _handlePanResponderEnd() {
-    const { imageWidth, imageHeight, isLandscape } = this.props;
-    const imageDim = isLandscape ? imageHeight : imageWidth;
+    const { imageWidth, imageHeight, isLandscape, isLong, maskWidth, maskHeight } = this.props;
+    const imageDim = isLandscape || isLong ? imageHeight : imageWidth;
+    const maskDim = isLong ? maskHeight : maskWidth;
     this._pan = this.currentPanValue;
     this._updatePanState();
     if (this._multiTouch) {
@@ -218,9 +221,8 @@ export class ViewEditor extends Component {
       this._previousDistance = 0;
       this._previousAngle = 0;
       this._previousCenter = 0;
-      const { maskWidth, maskHeight } = this.props;
-      if (imageDim * this._scale < maskWidth) {
-        this._updateSize(maskWidth / imageDim);
+      if (imageDim * this._scale < maskDim) {
+        this._updateSize(maskDim / imageDim);
       } else if (this._scale > 1) {
         this._updateSize(1);
       }
