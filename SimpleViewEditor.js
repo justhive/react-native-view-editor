@@ -33,6 +33,7 @@ export class ViewEditor extends Component {
     center: PropTypes.bool.isRequired,
     isLandscape: PropTypes.bool,
     isLong: PropTypes.bool,
+    isWide: PropTypes.bool,
     // used for multi-images
     bigContainerWidth: PropTypes.number,
   }
@@ -50,8 +51,8 @@ export class ViewEditor extends Component {
 
   constructor(props, context) {
     super(props, context);
-    const imageDim = props.isLandscape || props.isLong ? props.imageHeight : props.imageWidth;
-    const containerDim = props.isLong ? props.imageContainerHeight : props.imageContainerWidth
+    const imageDim = (props.isLandscape || props.isLong) && !props.isWide ? props.imageHeight : props.imageWidth;
+    const containerDim = props.isLong || props.isWide ? props.imageContainerHeight : props.imageContainerWidth
     this.state = {
       scale: new Animated.Value(containerDim / imageDim),
       pan: new Animated.ValueXY(),
@@ -209,9 +210,9 @@ export class ViewEditor extends Component {
   }
 
   _handlePanResponderEnd() {
-    const { imageWidth, imageHeight, isLandscape, isLong, maskWidth, maskHeight } = this.props;
-    const imageDim = isLandscape || isLong ? imageHeight : imageWidth;
-    const maskDim = isLong ? maskHeight : maskWidth;
+    const { imageWidth, imageHeight, isLandscape, isLong, isWide, maskWidth, maskHeight } = this.props;
+    const imageDim = (isLandscape || isLong) && !isWide ? imageHeight : imageWidth;
+    const maskDim = isLong || isWide ? maskHeight : maskWidth;
     this._pan = this.currentPanValue;
     this._updatePanState();
     if (this._multiTouch) {
