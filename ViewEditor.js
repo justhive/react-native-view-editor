@@ -36,6 +36,7 @@ export class ViewEditor extends Component {
     panning: PropTypes.bool,
     center: PropTypes.bool.isRequired,
     croppingRequired: PropTypes.bool.isRequired,
+    imageMaskShown: PropTypes.bool.isRequired,
     // used for multi-images
     bigContainerWidth: PropTypes.number,
     bigContainerHeight: PropTypes.number,
@@ -46,12 +47,15 @@ export class ViewEditor extends Component {
     onPressCallback: PropTypes.func,
     onLongPressCallback: PropTypes.func,
     onLongPressReleaseCallback: PropTypes.func,
+    onMoveCallback: PropTypes.func,
+    onEndCallback: PropTypes.func,
   }
 
   static defaultProps = {
     maskWidth: width,
     maskHeight: height,
     maskPadding: 0,
+    imageMaskShown: false,
     imageContainerWidth: width,
     imageContainerHeight: height,
     center: true,
@@ -104,6 +108,7 @@ export class ViewEditor extends Component {
     this._totalMovedX = 0;
     this._totalMovedY = 0;
     this._onLongPressSuccess = false;
+    this._onMoveCallbackSucess = false;
 
     // methods
     this._handlePanResponderGrant = this._handlePanResponderGrant.bind(this);
@@ -241,7 +246,7 @@ export class ViewEditor extends Component {
   }
 
   _handlePanResponderMove(e, gestureState) {
-    const { imageContainerWidth, imageWidth, imageHeight, onLongPressCallback } = this.props;
+    const { imageContainerWidth, imageWidth, imageHeight, onLongPressCallback, onMoveCallback } = this.props;
     if (gestureState.numberActiveTouches === 1 && !this._multiTouch) {
       this._totalMovedX += Math.abs(gestureState.dx);
       this._totalMovedY += Math.abs(gestureState.dy);
@@ -252,11 +257,18 @@ export class ViewEditor extends Component {
       ) {
         this._onLongPressSuccess = true;
         return onLongPressCallback();
+      } else if (onMoveCallback && !this._onMoveCallbackSucess) {
+        this._onMoveCallbackSucess = true;
+        onMoveCallback();
       }
       return Animated.event([
         null, { dx: this.state.pan.x, dy: this.state.pan.y }
       ])(e, gestureState);
     } else if (gestureState.numberActiveTouches !== 1) {
+      if (onMoveCallback && !this._onMoveCallbackSucess) {
+        this._onMoveCallbackSucess = true;
+        onMoveCallback();
+      }
       this._multiTouch = true;
       // set the intial values
       this._previousDistance = this._previousDistance === 0 ?
@@ -310,6 +322,13 @@ export class ViewEditor extends Component {
         this.props.onLongPressReleaseCallback();
       }
     }
+    if (this._onMoveCallbackSucess) {
+      this._onMoveCallbackSucess = false;
+      if (this.props.onEndCallback) {
+        this.props.onEndCallback();
+      }
+    }
+    this._onMoveCallbackSucess = false;
     this._totalMovedX = 0;
     this._totalMovedY = 0;
     const { imageWidth, imageHeight, imageContainerWidth, imageContainerHeight } = this.props;
@@ -418,6 +437,8 @@ export class ViewEditor extends Component {
         roundHeight = roundHeight / imageLength;
       } else if (layout === 'vertical') {
         roundWidth = roundWidth / imageLength
+      } else if (layout === 'quad') {
+        roundWidth = roundWidth / 2
       }
     }
 
@@ -459,6 +480,7 @@ export class ViewEditor extends Component {
       style,
       initialRotate,
       croppingRequired,
+      imageMaskShown,
     } = this.props;
 
     const layout = pan.getLayout();
@@ -487,18 +509,21 @@ export class ViewEditor extends Component {
 
     if (croppingRequired) {
       return (
-        <AnimatedSurface
-          ref={ref => this.surface = ref}
-          width={imageWidth}
-          height={imageHeight}
-          style={animatedStyle}
-          pixelRatio={1}
-          visibleContent={true}
-          preload={true}
-          {...this._panResponder.panHandlers}
-        >
-          {children}
-        </AnimatedSurface>
+        <View>
+          <AnimatedSurface
+            ref={ref => this.surface = ref}
+            width={imageWidth}
+            height={imageHeight}
+            style={animatedStyle}
+            pixelRatio={1}
+            visibleContent={true}
+            preload={true}
+            {...this._panResponder.panHandlers}
+          >
+            {children}
+          </AnimatedSurface>
+          {imageMaskShown && imageMask}
+        </View>
       );
     }
 
