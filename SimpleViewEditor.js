@@ -36,6 +36,9 @@ export class ViewEditor extends Component {
     isWide: PropTypes.bool,
     // used for multi-images
     bigContainerWidth: PropTypes.number,
+    // callbacks
+    onZoomCallback: PropTypes.func,
+    onPastYCallback: PropTypes.func,
   }
 
   static defaultProps = {
@@ -85,6 +88,8 @@ export class ViewEditor extends Component {
     this._updateSize = this._updateSize.bind(this);
     this._checkAdjustment = this._checkAdjustment.bind(this);
     this._updatePanState = this._updatePanState.bind(this);
+    // callbacks
+    this._onZoomCallbackSuccess = false;
 
   }
 
@@ -174,6 +179,10 @@ export class ViewEditor extends Component {
         null, { dx: this.state.pan.x, dy: this.state.pan.y }
       ])(e, gestureState);
     } else if (gestureState.numberActiveTouches !== 1) {
+      if (!this._onZoomCallbackSuccess) {
+        this._onZoomCallbackSuccess = true;
+        this.props.onZoomCallback(true);
+      }
       this._multiTouch = true;
       // set the intial values
       this._previousDistance = this._previousDistance === 0 ?
@@ -223,9 +232,19 @@ export class ViewEditor extends Component {
       this._previousAngle = 0;
       this._previousCenter = 0;
       if (imageDim * this._scale < maskDim) {
+        if (this.props.onZoomCallback) {
+          this.props.onZoomCallback(false);
+        }
         this._updateSize(maskDim / imageDim);
       } else if (this._scale > 1) {
+        if (this.props.onZoomCallback) {
+          this.props.onZoomCallback(false);
+        }
         this._updateSize(1);
+      } else {
+        if (this.props.onZoomCallback) {
+          this.props.onZoomCallback(true)
+        }
       }
     }
     this._checkAdjustment();
