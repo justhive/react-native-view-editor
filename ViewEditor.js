@@ -433,12 +433,10 @@ export class ViewEditor extends Component {
 
     // for multiImages
     if (imageLength > 1) {
-      if (layout === 'horizontal') {
-        roundHeight = roundHeight / imageLength;
-      } else if (layout === 'vertical') {
-        roundWidth = roundWidth / imageLength
+      if (layout === 'vertical') {
+        roundWidth = roundWidth / imageLength;
       } else if (layout === 'quad') {
-        roundWidth = roundWidth / 2
+        roundWidth = roundWidth / 2;
       }
     }
 
