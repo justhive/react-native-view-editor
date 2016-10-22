@@ -179,7 +179,7 @@ export class ViewEditor extends Component {
         null, { dx: this.state.pan.x, dy: this.state.pan.y }
       ])(e, gestureState);
     } else if (gestureState.numberActiveTouches !== 1) {
-      if (!this._onZoomCallbackSuccess) {
+      if (!this._onZoomCallbackSuccess && this.props.onZoomCallback) {
         this._onZoomCallbackSuccess = true;
         this.props.onZoomCallback(true);
       }
