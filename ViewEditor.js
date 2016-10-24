@@ -449,13 +449,18 @@ export class ViewEditor extends Component {
 
   getCurrentState({ pan, scale, layout, imageLength }) {
     const {
-      imageWidth,
-      imageHeight,
+      imageWidth: tempWidth,
+      imageHeight: tempHeight,
       imageContainerWidth,
       imageContainerHeight,
       bigContainerWidth,
       bigContainerHeight,
+      initialRotate,
     } = this.props;
+    const degrees = parseInt(initialRotate, 10);
+    const isTurned = degrees === 90 || degrees === 270;
+    const imageHeight = isTurned ? tempWidth : tempHeight;
+    const imageWidth = isTurned ? tempHeight : tempWidth;
     const containerWidth = bigContainerWidth || imageContainerWidth;
     const containerHeight = bigContainerHeight || imageContainerHeight;
     const ogScaleX = (containerWidth / imageWidth);
