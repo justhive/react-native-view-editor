@@ -71,10 +71,27 @@ export class ViewEditor extends Component {
     super(props, context);
     const relativeWidth = props.bigContainerWidth || props.imageContainerWidth;
     const relativeHeight = props.bigContainerHeight || props.imageContainerHeight;
+    const degrees = parseInt(props.initialRotate, 10);
     if (props.requiresMinScale) {
-      this._minScale = relativeHeight / props.imageHeight < relativeWidth / props.imageWidth ? relativeWidth / props.imageWidth : relativeHeight / props.imageHeight;
-    } else {
-      this._minScale = relativeHeight / props.imageHeight > relativeWidth / props.imageWidth ? relativeWidth / props.imageWidth : relativeHeight / props.imageHeight;
+      if (degrees === 90 || degrees === 270) {
+        this._minScale = relativeHeight / props.imageWidth < relativeWidth / props.imageHeight ?
+          relativeWidth / props.imageHeight :
+          relativeHeight / props.imageWidth;
+      } else {
+        this._minScale = relativeHeight / props.imageHeight < relativeWidth / props.imageWidth ?
+          relativeWidth / props.imageWidth :
+          relativeHeight / props.imageHeight;
+      }
+    } else  {
+      if (degrees === 90 || degrees === 270) {
+        this._minScale = relativeHeight / props.imageWidth > relativeWidth / props.imageHeight ?
+          relativeWidth / props.imageHeight :
+          relativeHeight / props.imageWidth;
+      } else {
+        this._minScale = relativeHeight / props.imageHeight > relativeWidth / props.imageWidth ?
+          relativeWidth / props.imageWidth :
+          relativeHeight / props.imageHeight;
+      }
     }
     this._scale = this._minScale;
     this.state = {
@@ -151,6 +168,7 @@ export class ViewEditor extends Component {
       imageContainerWidth,
       imageContainerHeight,
       requiresMinScale,
+      initialRotate
     } = this.props;
     const {
       imageHeight: prevImageHeight,
@@ -158,24 +176,42 @@ export class ViewEditor extends Component {
       imageContainerWidth: prevImageContainerWidth,
       imageContainerHeight: prevImageContainerHeight,
       requiresMinScale: prevRequiresMinScale,
+      initialRotate: prevInitialRotate,
     } = prevProps;
     if (
       imageHeight !== prevImageHeight ||
       imageWidth !== prevImageWidth ||
       imageContainerWidth !== prevImageContainerWidth ||
-      imageContainerHeight !== prevImageContainerHeight
+      imageContainerHeight !== prevImageContainerHeight ||
+      initialRotate !== prevInitialRotate
     ) {
+      const degrees = parseInt(initialRotate, 10);
       const relativeWidth = this.props.bigContainerWidth || this.props.imageContainerWidth;
       const relativeHeight = this.props.bigContainerHeight || this.props.imageContainerHeight;
       if (requiresMinScale) {
-        this._minScale = relativeHeight / this.props.imageHeight < relativeWidth / this.props.imageWidth ?
-          relativeWidth / this.props.imageWidth :
-          relativeHeight / this.props.imageHeight;
-          this._updateSize(this._minScale, false);
+        if (degrees === 90 || degrees === 270) {
+          this._minScale = relativeHeight / this.props.imageWidth < relativeWidth / this.props.imageHeight ?
+            relativeWidth / this.props.imageHeight :
+            relativeHeight / this.props.imageWidth;
+            this._updateSize(this._minScale, false);
+        } else {
+          this._minScale = relativeHeight / this.props.imageHeight < relativeWidth / this.props.imageWidth ?
+            relativeWidth / this.props.imageWidth :
+            relativeHeight / this.props.imageHeight;
+            this._updateSize(this._minScale, false);
+        }
       } else  {
-        this._minScale = relativeHeight / this.props.imageHeight > relativeWidth / this.props.imageWidth ?
-          relativeWidth / this.props.imageWidth :
-          relativeHeight / this.props.imageHeight;
+        if (degrees === 90 || degrees === 270) {
+          this._minScale = relativeHeight / this.props.imageWidth > relativeWidth / this.props.imageHeight ?
+            relativeWidth / this.props.imageHeight :
+            relativeHeight / this.props.imageWidth;
+            this._updateSize(this._minScale, false);
+        } else {
+          this._minScale = relativeHeight / this.props.imageHeight > relativeWidth / this.props.imageWidth ?
+            relativeWidth / this.props.imageWidth :
+            relativeHeight / this.props.imageHeight;
+            this._updateSize(this._minScale, false);
+        }
       }
       this._checkAdjustment(this._minScale);
     }
@@ -352,7 +388,11 @@ export class ViewEditor extends Component {
   }
 
   _checkAdjustment(withScale = this._scale) {
-    const { imageContainerHeight, imageContainerWidth, maskPadding, imageHeight, imageWidth, center } = this.props;
+    const { imageContainerHeight, imageContainerWidth, maskPadding, imageHeight: tempHeight, imageWidth: tempWidth, center, initialRotate } = this.props;
+    const degrees = parseInt(initialRotate, 10);
+    const isTurned = degrees === 90 || degrees === 270;
+    const imageHeight = isTurned ? tempWidth : tempHeight;
+    const imageWidth = isTurned ? tempHeight : tempWidth;
     const widthDiff = withScale * imageWidth - imageContainerWidth;
     const heightDiff = withScale * imageHeight - imageContainerHeight;
     const maskPaddingDiffX = widthDiff < 0 && center ? -widthDiff / 2 : maskPadding;
@@ -360,8 +400,8 @@ export class ViewEditor extends Component {
     const positionUpdate = { x: 0, y: 0 };
     const imageLeft = this.currentPanValue.x + widthDiff + maskPaddingDiffX;
     const imageAbove = this.currentPanValue.y + heightDiff + maskPaddingDiffY;
-    const additionalWidth = (imageWidth - withScale * imageWidth) / 2;
-    const additionalHeight = (imageHeight - withScale * imageHeight) / 2;
+    const additionalWidth = (tempWidth - withScale * imageWidth) / 2;
+    const additionalHeight = (tempHeight - withScale * imageHeight) / 2;
     if (this.currentPanValue.x > maskPaddingDiffX - additionalWidth) {
       positionUpdate.x = -this.currentPanValue.x - additionalWidth + maskPaddingDiffX;
     }
