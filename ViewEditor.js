@@ -500,7 +500,7 @@ export class ViewEditor extends Component {
     };
 
     if (initialRotate) {
-      // animatedStyle.transform.push({ rotate: initialRotate });
+      animatedStyle.transform.push({ rotate: initialRotate });
     } else if (rotate) {
       animatedStyle.transform.push({ rotate: this.state.angle });
     }
