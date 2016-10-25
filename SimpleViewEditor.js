@@ -38,7 +38,7 @@ export class ViewEditor extends Component {
     bigContainerWidth: PropTypes.number,
     // callbacks
     onZoomCallback: PropTypes.func,
-    onPastYCallback: PropTypes.func,
+    onSwipeDownCallback: PropTypes.func,
   }
 
   static defaultProps = {
@@ -90,7 +90,7 @@ export class ViewEditor extends Component {
     this._updatePanState = this._updatePanState.bind(this);
     // callbacks
     this._onZoomCallbackSuccess = false;
-
+    this._initialAdjustmentPerformed = false;
   }
 
   componentWillMount() {
@@ -267,7 +267,13 @@ export class ViewEditor extends Component {
       positionUpdate.x = -this.currentPanValue.x - additionalWidth + maskPaddingDiffX;
     }
     if (this.currentPanValue.y > maskPaddingDiffY - additionalHeight) {
+
       positionUpdate.y = -this.currentPanValue.y - additionalHeight + maskPaddingDiffY;
+      if (!this._initialAdjustmentPerformed) {
+        this._initialAdjustmentPerformed = true;
+      } else if (this.props.onSwipeDownCallback) {
+        this.props.onSwipeDownCallback();
+      }
     }
     if (imageAbove < -additionalHeight) {
       positionUpdate.y = -imageAbove - additionalHeight;
