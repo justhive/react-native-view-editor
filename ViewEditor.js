@@ -180,7 +180,7 @@ export class ViewEditor extends Component {
           relativeHeight / this.props.imageHeight;
           this._updateSize(this._minScale, false);
       } else  {
-        this._minScale = relativeHeight / this.props.imageHeight > relativeWidth / this.props.imageWidth ?
+        this._minScale = relativeHeight / this.props.imageHeight < relativeWidth / this.props.imageWidth ?
           relativeWidth / this.props.imageWidth :
           relativeHeight / this.props.imageHeight;
           this._updateSize(this._minScale, false);
