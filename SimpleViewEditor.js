@@ -313,8 +313,8 @@ export class ViewEditor extends Component {
     return (
       <View
         style={[
-          style,
           styles.container,
+          style,
           { width: imageContainerWidth, height: imageContainerHeight }
         ]}
         {...this._panResponder.panHandlers}
