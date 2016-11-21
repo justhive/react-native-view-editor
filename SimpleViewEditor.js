@@ -27,6 +27,8 @@ export class ViewEditor extends Component {
     maskHeight: PropTypes.number,
     maskWidth: PropTypes.number,
     maskPadding: PropTypes.number,
+    initialOffsetX: PropTypes.number,
+    initialOffsetY: PropTypes.number,
     children: PropTypes.any,
     rotate: PropTypes.bool,
     panning: PropTypes.bool,
@@ -47,6 +49,8 @@ export class ViewEditor extends Component {
     maskPadding: 0,
     imageContainerWidth: width,
     imageContainerHeight: height,
+    initialOffsetX: 0,
+    initialOffsetY: 0,
     center: true,
     rotate: false,
     panning: true,
@@ -108,6 +112,7 @@ export class ViewEditor extends Component {
     this.scaleListener = this.state.scale.addListener(value => this.currentScaleValue = value);
     this.angleListener = this.state.angle.addListener(value => this.currentAngleValue = value);
     this._checkAdjustment();
+    this.state.pan.setOffset({ x: this.props.initialOffsetX, y: this.props.initialOffsetY });
   }
 
   componentDidUpdate(prevProps) {
