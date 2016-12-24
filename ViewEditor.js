@@ -37,7 +37,6 @@ export class ViewEditor extends Component {
     center: PropTypes.bool.isRequired,
     croppingRequired: PropTypes.bool.isRequired,
     imageMaskShown: PropTypes.bool.isRequired,
-    showAtTop: PropTypes.bool,
     // used for multi-images
     bigContainerWidth: PropTypes.number,
     bigContainerHeight: PropTypes.number,
@@ -66,7 +65,6 @@ export class ViewEditor extends Component {
     requiresMinScale: false,
     initialScale: null,
     initialPan: null,
-    showAtTop: false,
   }
 
   constructor(props, context) {
@@ -227,13 +225,7 @@ export class ViewEditor extends Component {
         this.setState({ animating: false });
         this._scale = this.currentScaleValue.value;
         if (initialPan) {
-          const { showAtTop, imageHeight } = this.props;
-          const pan = Object.assign({}, initialPan);
-          if (showAtTop) {
-            const additionalHeight = (imageHeight - this._scale * imageHeight) / 2;
-            pan.y = -additionalHeight;
-          }
-          this._updatePosition(pan.x, pan.y);
+          this._updatePosition(initialPan.x, initialPan.y);
         }
       });
     });
