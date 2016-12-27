@@ -50,6 +50,7 @@ export class ViewEditor extends Component {
     onLongPressReleaseCallback: PropTypes.func,
     onMoveCallback: PropTypes.func,
     onEndCallback: PropTypes.func,
+    onLoad: PropTypes.func,
   }
 
   static defaultProps = {
@@ -139,7 +140,7 @@ export class ViewEditor extends Component {
   }
 
   componentDidMount() {
-    const { initialPan, initialScale } = this.props;
+    const { initialPan, initialScale, croppingRequired, onLoad } = this.props;
     this.panListener = this.state.pan.addListener(value => this.currentPanValue = value);
     this.scaleListener = this.state.scale.addListener(value => this.currentScaleValue = value);
     this.angleListener = this.state.angle.addListener(value => this.currentAngleValue = value);
@@ -147,6 +148,9 @@ export class ViewEditor extends Component {
       this._updateSize(initialScale, initialPan);
     } else {
       this._checkAdjustment();
+    }
+    if (!croppingRequired && typeof onLoad === 'function') {
+      onLoad();
     }
   }
 
@@ -496,6 +500,7 @@ export class ViewEditor extends Component {
       initialRotate,
       croppingRequired,
       imageMaskShown,
+      onLoad,
     } = this.props;
 
     const layout = pan.getLayout();
@@ -532,6 +537,7 @@ export class ViewEditor extends Component {
             style={animatedStyle}
             pixelRatio={1}
             visibleContent={true}
+            onLoad={onLoad}
             preload={true}
             {...this._panResponder.panHandlers}
           >
