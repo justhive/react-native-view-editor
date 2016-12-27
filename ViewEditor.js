@@ -365,7 +365,7 @@ export class ViewEditor extends Component {
       if (this._minScale > this._scale) {
         this._updateSize(this._minScale);
       } else if (this._scale > 1) {
-        this._updateSize(1);
+        this._updateSize(this._scale);
       }
     }
     this._checkAdjustment();
