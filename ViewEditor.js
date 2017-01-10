@@ -448,15 +448,6 @@ export class ViewEditor extends Component {
     const xPanOffset = (ogPanX - pan.x) / scale;
     const yPanOffset = (ogPanY - pan.y) / scale;
 
-    // for multiImages
-    if (imageLength > 1) {
-      if (layout === 'vertical') {
-        roundWidth = roundWidth / imageLength;
-      } else if (layout === 'quad') {
-        roundWidth = roundWidth / 2;
-      }
-    }
-
     // amount image top left corner has moved from zooming
     const zoomOffset = {
       x: xZoomOffset,
