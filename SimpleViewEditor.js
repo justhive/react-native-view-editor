@@ -243,12 +243,11 @@ export class ViewEditor extends Component {
           this.props.onZoomCallback(false);
         }
         this._updateSize(maskDim / imageDim);
-      } else if (this._scale > 1) {
+      } else if (this._scale > maxZoomScale) {
         if (this.props.onZoomCallback) {
           this.props.onZoomCallback(false);
         }
-        const scale = this._scale < maxZoomScale ? this._scale : maxZoomScale;
-        this._updateSize(scale);
+        this._updateSize(maxZoomScale);
       } else {
         if (this.props.onZoomCallback) {
           this.props.onZoomCallback(true)
