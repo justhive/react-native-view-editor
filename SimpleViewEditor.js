@@ -29,6 +29,7 @@ export class ViewEditor extends Component {
     maskPadding: PropTypes.number,
     initialOffsetX: PropTypes.number,
     initialOffsetY: PropTypes.number,
+    maxZoomScale: PropTypes.number,
     children: PropTypes.any,
     rotate: PropTypes.bool,
     panning: PropTypes.bool,
@@ -41,7 +42,7 @@ export class ViewEditor extends Component {
     // callbacks
     onZoomCallback: PropTypes.func,
     onSwipeDownCallback: PropTypes.func,
-  }
+  };
 
   static defaultProps = {
     maskWidth: width,
@@ -51,15 +52,16 @@ export class ViewEditor extends Component {
     imageContainerHeight: height,
     initialOffsetX: 0,
     initialOffsetY: 0,
+    maxZoomScale: 1,
     center: true,
     rotate: false,
     panning: true,
-  }
+  };
 
   constructor(props, context) {
     super(props, context);
     const imageDim = (props.isLandscape || props.isLong) && !props.isWide ? props.imageHeight : props.imageWidth;
-    const containerDim = props.isLong || props.isWide ? props.imageContainerHeight : props.imageContainerWidth
+    const containerDim = props.isLong || props.isWide ? props.imageContainerHeight : props.imageContainerWidth;
     this.state = {
       scale: new Animated.Value(containerDim / imageDim),
       pan: new Animated.ValueXY(),
@@ -224,7 +226,7 @@ export class ViewEditor extends Component {
   }
 
   _handlePanResponderEnd() {
-    const { imageWidth, imageHeight, isLandscape, isLong, isWide, maskWidth, maskHeight } = this.props;
+    const { imageWidth, imageHeight, isLandscape, isLong, isWide, maskWidth, maskHeight, maxZoomScale } = this.props;
     const imageDim = (isLandscape || isLong) && !isWide ? imageHeight : imageWidth;
     const maskDim = isLong || isWide ? maskHeight : maskWidth;
     this._pan = this.currentPanValue;
@@ -241,11 +243,11 @@ export class ViewEditor extends Component {
           this.props.onZoomCallback(false);
         }
         this._updateSize(maskDim / imageDim);
-      } else if (this._scale > 1) {
+      } else if (this._scale > maxZoomScale) {
         if (this.props.onZoomCallback) {
           this.props.onZoomCallback(false);
         }
-        this._updateSize(1);
+        this._updateSize(maxZoomScale);
       } else {
         if (this.props.onZoomCallback) {
           this.props.onZoomCallback(true)
