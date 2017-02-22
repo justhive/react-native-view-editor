@@ -279,7 +279,7 @@ export class ViewEditor extends Component {
       if (!this._initialAdjustmentPerformed) {
         this._initialAdjustmentPerformed = true;
       } else if (this.props.onSwipeDownCallback) {
-        this.props.onSwipeDownCallback();
+        this.props.onSwipeDownCallback(positionUpdate);
       }
     }
     if (imageAbove < -additionalHeight) {
