@@ -225,7 +225,7 @@ export class ViewEditor extends Component {
     }
   }
 
-  _handlePanResponderEnd() {
+  _handlePanResponderEnd(e) {
     const { imageWidth, imageHeight, isLandscape, isLong, isWide, maskWidth, maskHeight, maxZoomScale } = this.props;
     const imageDim = (isLandscape || isLong) && !isWide ? imageHeight : imageWidth;
     const maskDim = isLong || isWide ? maskHeight : maskWidth;
@@ -254,10 +254,10 @@ export class ViewEditor extends Component {
         }
       }
     }
-    this._checkAdjustment();
+    this._checkAdjustment(e);
   }
 
-  _checkAdjustment() {
+  _checkAdjustment(e) {
     const { imageContainerHeight, imageContainerWidth, maskPadding, imageHeight: tempHeight, imageWidth: tempWidth, center, isLandscape } = this.props;
     const imageHeight = isLandscape ? tempWidth : tempHeight;
     const imageWidth = isLandscape ? tempHeight : tempWidth;
@@ -279,7 +279,7 @@ export class ViewEditor extends Component {
       if (!this._initialAdjustmentPerformed) {
         this._initialAdjustmentPerformed = true;
       } else if (this.props.onSwipeDownCallback) {
-        this.props.onSwipeDownCallback();
+        this.props.onSwipeDownCallback(positionUpdate, e);
       }
     }
     if (imageAbove < -additionalHeight) {
