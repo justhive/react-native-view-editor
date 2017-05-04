@@ -429,10 +429,6 @@ export class ViewEditor extends Component {
         (err) => reject(err))
     );
     if (useCustomContent && !croppingRequired) {
-      properties.offset.x *= 2;
-      properties.offset.y *= 2;
-      properties.size.width *= 2;
-      properties.size.height *= 2;
       return takeSnapshot(this.viewRef, {
         quality: 1,
         result: 'file',
