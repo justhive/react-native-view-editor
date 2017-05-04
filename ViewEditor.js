@@ -7,6 +7,7 @@ import {
   Easing,
   StyleSheet,
   ImageEditor,
+  Image,
 } from 'react-native';
 import RNFS from 'react-native-fs';
 import { AnimatedSurface } from 'gl-react-native';
@@ -420,8 +421,13 @@ export class ViewEditor extends Component {
     const cropImage = (image) => new Promise(resolve =>
       ImageEditor.cropImage(image, properties, uri => resolve(uri), () => null)
     );
-    const { croppingRequired, useCustomContent } = this.props;
+    const { croppingRequired, useCustomContent, imageWidth, imageHeight } = this.props;
 
+    const getSize = (url) => new Promise((resolve, reject) =>
+      Image.getSize(url,
+        (imgWidth, imgHeight) => resolve({ width: imgWidth, height: imgHeight, url }),
+        (err) => reject(err))
+    );
     if (useCustomContent && !croppingRequired) {
       properties.offset.x *= 2;
       properties.offset.y *= 2;
@@ -434,7 +440,13 @@ export class ViewEditor extends Component {
         width: undefined,
         height: undefined
       })
-        .then(image => cropImage(image))
+        .then(url => getSize(url))
+        .then(image => {
+          // because of takeSnapshot resizes image size
+          properties.size.height *= image.height / imageHeight;
+          properties.size.width *= image.width / imageWidth;
+          return cropImage(image.url);
+        })
         .then(uri => uri)
         .catch(err => console.log(err));
     }
