@@ -1,4 +1,4 @@
-import React, { Component, PropTypes } from 'react';
+import React, { Component, PropTypes, cloneElement } from 'react';
 import {
   Dimensions,
   PanResponder,
@@ -10,7 +10,8 @@ import {
   Image,
 } from 'react-native';
 import RNFS from 'react-native-fs';
-import { Surface, AnimatedSurface } from 'gl-react-native';
+import { AnimatedSurface } from 'gl-react-native';
+import { takeSnapshot } from 'react-native-view-shot';
 import { distance, angle, center } from './utilities';
 const { width, height } = Dimensions.get('window');
 
@@ -38,6 +39,7 @@ export class ViewEditor extends Component {
     croppingRequired: PropTypes.bool.isRequired,
     imageMaskShown: PropTypes.bool.isRequired,
     showAtTop: PropTypes.bool,
+    useCustomContent: PropTypes.bool,
     // used for multi-images
     bigContainerWidth: PropTypes.number,
     bigContainerHeight: PropTypes.number,
@@ -68,6 +70,7 @@ export class ViewEditor extends Component {
     initialScale: null,
     initialPan: null,
     showAtTop: false,
+    useCustomContent: false,
   }
 
   constructor(props, context) {
@@ -93,6 +96,8 @@ export class ViewEditor extends Component {
     };
     // ref of the surface to capture
     this.surface = null;
+    // ref of view to capture
+    this.viewRef = null;
     // panning variables
     this.panListener = null;
     this.currentPanValue = { x: 0, y: 0 };
@@ -261,7 +266,7 @@ export class ViewEditor extends Component {
       this._onLongPress = setTimeout(() => {
         clearTimeout(this._onLongPress);
         this._onLongPress = null;
-      }, 500)
+      }, 500);
     }
   }
 
@@ -416,6 +421,32 @@ export class ViewEditor extends Component {
     const cropImage = (image) => new Promise(resolve =>
       ImageEditor.cropImage(image, properties, uri => resolve(uri), () => null)
     );
+    const { croppingRequired, useCustomContent, imageWidth, imageHeight } = this.props;
+
+    const getSize = (url) => new Promise((resolve, reject) =>
+      Image.getSize(url,
+        (imgWidth, imgHeight) => resolve({ width: imgWidth, height: imgHeight, url }),
+        (err) => reject(err))
+    );
+    if (useCustomContent && !croppingRequired) {
+      return takeSnapshot(this.viewRef, {
+        quality: 1,
+        result: 'file',
+        format: 'jpg',       
+        width: undefined,
+        height: undefined
+      })
+        .then(url => getSize(url))
+        .then(image => {
+          // because of takeSnapshot resizes image size
+          properties.size.height *= image.height / imageHeight;
+          properties.size.width *= image.width / imageWidth;
+          return cropImage(image.url);
+        })
+        .then(uri => uri)
+        .catch(err => console.log(err));
+    }
+
     return this.surface.captureFrame({
       quality: 1,
       format: 'file',
@@ -443,12 +474,20 @@ export class ViewEditor extends Component {
     const ogScaleY = (containerHeight / imageHeight);
     const scaleChangeX = (scale - ogScaleX) / scale;
     const scaleChangeY = (scale - ogScaleY) / scale;
-    let roundWidth = Math.floor(scale * imageWidth < containerWidth ? imageWidth : containerWidth / scale);
-    let roundHeight = Math.floor(scale * imageHeight < containerHeight ? imageHeight : containerHeight / scale);
+    const roundWidth = Math.floor(scale * imageWidth < containerWidth
+      ? imageWidth
+      : containerWidth / scale);
+    const roundHeight = Math.floor(scale * imageHeight < containerHeight
+      ? imageHeight
+      : containerHeight / scale);
     const ogPanX = (containerWidth - imageWidth) / 2;
     const ogPanY = (containerHeight - imageHeight) / 2;
-    const xZoomOffset = imageWidth * scaleChangeX / 2 - (containerWidth - imageWidth * ogScaleX) < 0 ? 0 : imageWidth * scaleChangeX / 2 - (containerWidth - imageWidth * ogScaleX) / 2;
-    const yZoomOffset = imageHeight * scaleChangeY / 2 - (containerHeight - imageHeight * ogScaleY) < 0 ? 0 : imageHeight * scaleChangeY / 2 - (containerHeight - imageHeight * ogScaleY) / 2;
+    const xZoomOffset = imageWidth * scaleChangeX / 2 - (containerWidth - imageWidth * ogScaleX) < 0
+    ? 0
+    : imageWidth * scaleChangeX / 2 - (containerWidth - imageWidth * ogScaleX) / 2;
+    const yZoomOffset = imageHeight * scaleChangeY / 2 - (containerHeight - imageHeight * ogScaleY) < 0
+    ? 0
+    : imageHeight * scaleChangeY / 2 - (containerHeight - imageHeight * ogScaleY) / 2;
     const xPanOffset = (ogPanX - pan.x) / scale;
     const yPanOffset = (ogPanY - pan.y) / scale;
 
@@ -492,6 +531,7 @@ export class ViewEditor extends Component {
       croppingRequired,
       imageMaskShown,
       onLoad,
+      useCustomContent
     } = this.props;
 
     const layout = pan.getLayout();
@@ -538,13 +578,28 @@ export class ViewEditor extends Component {
         </View>
       );
     }
+    if (useCustomContent) {
+      const { style: contentStyle } = children.props;
+      return (
+        <View
+          style={wrapStyle}
+          {...this._panResponder.panHandlers}
+        >
+          {cloneElement(children, {
+            style: [animatedStyle, contentStyle],
+            ref: (ref) => this.viewRef = ref,
+          })}
+          {imageMaskShown && imageMask}
+        </View>
+      );
+    }
 
     return (
       <View style={wrapStyle} {...this._panResponder.panHandlers}>
         <Animated.View style={animatedStyle}>
           {children}
         </Animated.View>
-        {imageMask && React.createElement(imageMask)}
+        {imageMaskShown && imageMask}
       </View>
     );
   }
