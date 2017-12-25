@@ -1,4 +1,4 @@
-import React, { Component, PropTypes } from 'react';
+import React, { Component } from 'react';
 import {
   Dimensions,
   PanResponder,
@@ -7,6 +7,7 @@ import {
   Easing,
   StyleSheet,
 } from 'react-native';
+import PropTypes from 'prop-types';
 import { distance, angle, center } from './utilities';
 const { width, height } = Dimensions.get('window');
 
@@ -102,7 +103,11 @@ export class ViewEditor extends Component {
   componentWillMount() {
     this._panResponder = PanResponder.create({
       onStartShouldSetPanResponder: () => !this.state.animating && this.props.panning,
-      onMoveShouldSetPanResponder: () => !this.state.animating && this.props.panning,
+      onMoveShouldSetPanResponder: (e, gestureState) => {
+        const {dx, dy} = gestureState;
+        return ((Math.abs(dx) > 10) || (Math.abs(dy) > 10)) 
+            && !this.state.animating && this.props.panning;
+      },
       onPanResponderMove: this._handlePanResponderMove,
       onPanResponderRelease: this._handlePanResponderEnd,
       onPanResponderTerminate: this._handlePanResponderEnd,
