@@ -1,5 +1,5 @@
 {
-  "name": "react-native-view-editor-2",
+  "name": "react-native-view-editor",
   "version": "1.0.0",
   "description": "A simple wrapper for being able to rotate, pan, and resize a child view or image with animations",
   "repository": {
