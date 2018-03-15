@@ -1,19 +1,13 @@
-import React, { Component, PropTypes } from 'react';
-import {
-  Dimensions,
-  PanResponder,
-  View,
-  Animated,
-  Easing,
-  StyleSheet,
-} from 'react-native';
-import { distance, angle, center } from './utilities';
-const { width, height } = Dimensions.get('window');
+import React, { Component } from "react";
+import PropTypes from "prop-types";
+import { Dimensions, PanResponder, View, Animated, Easing, StyleSheet } from "react-native";
+import { distance, angle, center } from "./utilities";
+const { width, height } = Dimensions.get("window");
 
 const styles = StyleSheet.create({
   container: {
-    overflow: 'hidden',
-  },
+    overflow: "hidden"
+  }
 });
 
 export class ViewEditor extends Component {
@@ -41,7 +35,7 @@ export class ViewEditor extends Component {
     bigContainerWidth: PropTypes.number,
     // callbacks
     onZoomCallback: PropTypes.func,
-    onSwipeDownCallback: PropTypes.func,
+    onSwipeDownCallback: PropTypes.func
   };
 
   static defaultProps = {
@@ -55,7 +49,7 @@ export class ViewEditor extends Component {
     maxZoomScale: 1,
     center: true,
     rotate: false,
-    panning: true,
+    panning: true
   };
 
   constructor(props, context) {
@@ -65,9 +59,9 @@ export class ViewEditor extends Component {
     this.state = {
       scale: new Animated.Value(containerDim / imageDim),
       pan: new Animated.ValueXY(),
-      angle: new Animated.Value('0deg'),
+      angle: new Animated.Value("0deg"),
       animating: false,
-      render: false,
+      render: false
     };
     this._panResponder = {};
     // panning variables
@@ -105,30 +99,25 @@ export class ViewEditor extends Component {
       onMoveShouldSetPanResponder: () => !this.state.animating && this.props.panning,
       onPanResponderMove: this._handlePanResponderMove,
       onPanResponderRelease: this._handlePanResponderEnd,
-      onPanResponderTerminate: this._handlePanResponderEnd,
+      onPanResponderTerminate: this._handlePanResponderEnd
     });
   }
 
   componentDidMount() {
-    this.panListener = this.state.pan.addListener(value => this.currentPanValue = value);
-    this.scaleListener = this.state.scale.addListener(value => this.currentScaleValue = value);
-    this.angleListener = this.state.angle.addListener(value => this.currentAngleValue = value);
+    this.panListener = this.state.pan.addListener(value => (this.currentPanValue = value));
+    this.scaleListener = this.state.scale.addListener(value => (this.currentScaleValue = value));
+    this.angleListener = this.state.angle.addListener(value => (this.currentAngleValue = value));
     this._checkAdjustment();
     this.state.pan.setOffset({ x: this.props.initialOffsetX, y: this.props.initialOffsetY });
   }
 
   componentDidUpdate(prevProps) {
-    const {
-      imageHeight,
-      imageWidth,
-      imageContainerWidth,
-      imageContainerHeight,
-    } = this.props;
+    const { imageHeight, imageWidth, imageContainerWidth, imageContainerHeight } = this.props;
     const {
       imageHeight: prevImageHeight,
       imageWidth: prevImageWidth,
       imageContainerWidth: prevImageContainerWidth,
-      imageContainerHeight: prevImageContainerHeight,
+      imageContainerHeight: prevImageContainerHeight
     } = prevProps;
     if (
       imageHeight !== prevImageHeight ||
@@ -148,25 +137,21 @@ export class ViewEditor extends Component {
 
   _updatePosition(x, y) {
     this.setState({ animating: true }, () => {
-      Animated.timing(
-        this.state.pan, {
-          toValue: { x, y },
-          easing: Easing.elastic(1),
-          duration: 250
-        }
-      ).start(() => this._updatePanState())
+      Animated.timing(this.state.pan, {
+        toValue: { x, y },
+        easing: Easing.elastic(1),
+        duration: 250
+      }).start(() => this._updatePanState());
     });
   }
 
   _updateSize(scale) {
     this.setState({ animating: true }, () => {
-      Animated.timing(
-        this.state.scale, {
-          toValue: scale,
-          easing: Easing.elastic(1),
-          duration: 250
-        }
-      ).start(() => {
+      Animated.timing(this.state.scale, {
+        toValue: scale,
+        easing: Easing.elastic(1),
+        duration: 250
+      }).start(() => {
         this.setState({ animating: false });
         this._scale = this.currentScaleValue.value;
       });
@@ -182,9 +167,7 @@ export class ViewEditor extends Component {
   _handlePanResponderMove(e, gestureState) {
     const { imageContainerWidth, imageWidth, imageHeight } = this.props;
     if (gestureState.numberActiveTouches === 1 && !this._multiTouch) {
-      return Animated.event([
-        null, { dx: this.state.pan.x, dy: this.state.pan.y }
-      ])(e, gestureState);
+      return Animated.event([null, { dx: this.state.pan.x, dy: this.state.pan.y }])(e, gestureState);
     } else if (gestureState.numberActiveTouches !== 1) {
       if (!this._onZoomCallbackSuccess && this.props.onZoomCallback) {
         this._onZoomCallbackSuccess = true;
@@ -192,20 +175,16 @@ export class ViewEditor extends Component {
       }
       this._multiTouch = true;
       // set the intial values
-      this._previousDistance = this._previousDistance === 0 ?
-        distance(e.nativeEvent.touches) : this._previousDistance;
-      this._previousAngle = this._previousAngle === 0 ?
-        angle(e.nativeEvent.touches) : this._previousAngle;
-      this._previousCenter = this._previousCenter === 0 ?
-        center(e.nativeEvent.touches) : this._previousCenter;
+      this._previousDistance = this._previousDistance === 0 ? distance(e.nativeEvent.touches) : this._previousDistance;
+      this._previousAngle = this._previousAngle === 0 ? angle(e.nativeEvent.touches) : this._previousAngle;
+      this._previousCenter = this._previousCenter === 0 ? center(e.nativeEvent.touches) : this._previousCenter;
       // angle calculations
       const angleChange = angle(e.nativeEvent.touches) - this._previousAngle;
-      this.state.angle.setValue(
-        `${parseFloat(this._angle) + angleChange}deg`
-      );
+      this.state.angle.setValue(`${parseFloat(this._angle) + angleChange}deg`);
       // zoom calculations
       const currentDistance = distance(e.nativeEvent.touches);
-      const newScale = ((currentDistance - this._previousDistance + imageContainerWidth) / imageContainerWidth) * this._scale;
+      const newScale =
+        (currentDistance - this._previousDistance + imageContainerWidth) / imageContainerWidth * this._scale;
       this.state.scale.setValue(newScale);
       // zoom to the center of the touches
       // const currentCenter = center(e.nativeEvent.touches);
@@ -250,7 +229,7 @@ export class ViewEditor extends Component {
         this._updateSize(maxZoomScale);
       } else {
         if (this.props.onZoomCallback) {
-          this.props.onZoomCallback(true)
+          this.props.onZoomCallback(true);
         }
       }
     }
@@ -258,7 +237,15 @@ export class ViewEditor extends Component {
   }
 
   _checkAdjustment(e) {
-    const { imageContainerHeight, imageContainerWidth, maskPadding, imageHeight: tempHeight, imageWidth: tempWidth, center, isLandscape } = this.props;
+    const {
+      imageContainerHeight,
+      imageContainerWidth,
+      maskPadding,
+      imageHeight: tempHeight,
+      imageWidth: tempWidth,
+      center,
+      isLandscape
+    } = this.props;
     const imageHeight = isLandscape ? tempWidth : tempHeight;
     const imageWidth = isLandscape ? tempHeight : tempWidth;
     const widthDiff = this._scale * imageWidth - imageContainerWidth;
@@ -274,7 +261,6 @@ export class ViewEditor extends Component {
       positionUpdate.x = -this.currentPanValue.x - additionalWidth + maskPaddingDiffX;
     }
     if (this.currentPanValue.y > maskPaddingDiffY - additionalHeight) {
-
       positionUpdate.y = -this.currentPanValue.y - additionalHeight + maskPaddingDiffY;
       if (!this._initialAdjustmentPerformed) {
         this._initialAdjustmentPerformed = true;
@@ -302,35 +288,23 @@ export class ViewEditor extends Component {
       children,
       rotate,
       style,
-      panning,
+      panning
     } = this.props;
     const layout = pan.getLayout();
     const animatedStyle = {
       height: imageHeight,
       width: imageWidth,
-      transform: [
-        { translateX: layout.left },
-        { translateY: layout.top },
-        { scale }
-      ]
+      transform: [{ translateX: layout.left }, { translateY: layout.top }, { scale }]
     };
     if (rotate) {
       animatedStyle.transform.push({ rotate: this.state.angle });
     }
     return (
       <View
-        style={[
-          styles.container,
-          style,
-          { width: imageContainerWidth, height: imageContainerHeight }
-        ]}
+        style={[styles.container, style, { width: imageContainerWidth, height: imageContainerHeight }]}
         {...this._panResponder.panHandlers}
       >
-        <Animated.View
-          style={animatedStyle}
-        >
-          {render && children}
-        </Animated.View>
+        <Animated.View style={animatedStyle}>{render && children}</Animated.View>
         {imageMask}
       </View>
     );
