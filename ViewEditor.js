@@ -1,4 +1,5 @@
-import React, { Component, PropTypes, cloneElement } from 'react';
+import React, { Component, cloneElement } from 'react';
+import PropTypes from "prop-types";
 import {
   Dimensions,
   PanResponder,
@@ -432,7 +433,7 @@ export class ViewEditor extends Component {
       return takeSnapshot(this.viewRef, {
         quality: 1,
         result: 'file',
-        format: 'jpg',       
+        format: 'jpg',
         width: undefined,
         height: undefined
       })
